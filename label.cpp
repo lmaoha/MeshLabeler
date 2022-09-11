@@ -16,8 +16,8 @@
 #include <vtkUnsignedCharArray.h>
 #include <map>
 #include <vtkXMLPolyDataReader.h>
-#include<vtkXMLPolyDataWriter.h>
-#include<vtkInformation.h>
+#include <vtkXMLPolyDataWriter.h>
+#include <vtkInformation.h>
 #include<vtkPolyDataNormals.h>
 #include <vtkXMLGenericDataObjectReader.h>
 #include<vtkXMLDataParser.h>
@@ -45,9 +45,9 @@
 #include<vtkCellArray.h>
 #include<vtkDataArray.h>
 #include <vtkCallbackCommand.h>
-#include<vtkCellPicker.h>
+#include <vtkCellPicker.h>
 #include <vtkMapper.h>
-#include<vtkSTLReader.h>
+#include <vtkSTLReader.h>
 #include <vtkCellData.h>
 #include <vtkFloatArray.h>
 #include <vtkLookupTable.h>
@@ -56,6 +56,7 @@
 #include <vtkDecimatePro.h>
 #include <vtkAutoInit.h>
 #include <QString>
+
 
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
@@ -331,7 +332,7 @@ void saveVTP()
     polydata->GetCellData()->GetScalars()->Modified();
     vtkNew<vtkXMLPolyDataWriter> writer;
     writer->SetInputData(polydata);
-    writer->SetFileName(m_outputFileName.toLatin1().data());
+    writer->SetFileName(m_outputFileName.toLocal8Bit().data());
     writer->Write();
 }
 class DesignInteractorStyle : public vtkInteractorStyleTrackballCamera
@@ -362,11 +363,11 @@ int showVTK()
     {
         return -1;
     }
-    m_vtkRender->RemoveAllViewProps();
 
+    m_vtkRender->RemoveAllViewProps();
 //    vtkSmartPointer<vtkSTLReader> STLReader= vtkSmartPointer<vtkSTLReader>::New();
     vtkNew<vtkSTLReader> STLReader;
-    STLReader->SetFileName(m_inputFileName.toLatin1().data());
+    STLReader->SetFileName(m_inputFileName.toLocal8Bit().data()); //修复中文路径无法打开文件的bug
     STLReader->Update();
     polydata = STLReader->GetOutput();
 
@@ -444,6 +445,7 @@ int showVTK()
 //    vtkInter->Start();
     m_vtkRenderWin->Render();
 
+    m_vtkRender->ResetCamera();
     return EXIT_SUCCESS;
 }
 

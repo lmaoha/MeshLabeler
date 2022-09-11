@@ -1,7 +1,6 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "label.cpp"
-
 #include <QFileDialog>
 #include <QDebug>
 #include <QTextCodec>
@@ -73,7 +72,6 @@ void MainWindow::on_inputFile_btn_clicked()
     m_inputFileName = fileName;
     m_lastOpenPath = fileName;
     ui->fileName_label->setText(m_inputFileName);
-    qDebug()<<"fileName: "<<fileName << "char: " << fileName.toLatin1().data();
     showVTK();
     saveConfig();
 }
