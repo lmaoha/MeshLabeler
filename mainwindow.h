@@ -22,6 +22,7 @@ public:
     void loadConfig();
     void saveConfig();
 
+    void openStlFile(QString stlFilePath);
 
 private slots:
     void on_inputFile_btn_clicked();

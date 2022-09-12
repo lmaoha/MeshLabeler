@@ -79,7 +79,8 @@ vtkNew<vtkRenderWindow> m_vtkRenderWin;
 vtkNew<vtkRenderer> m_vtkRender;
 vtkNew<vtkLookupTable> lut;
 vtkSmartPointer<vtkPolyData>polydata;
-vtkSmartPointer<vtkActor> polydataActor;
+//vtkSmartPointer<vtkActor> polydataActor;
+vtkNew<vtkActor>polydataActor;
 vtkSmartPointer<vtkActor> sphereActor = vtkSmartPointer<vtkActor>::New();
 vtkNew<vtkNamedColors> vtkColor;
 int PressFlag = 0;//标签
@@ -410,7 +411,7 @@ int showVTK()
     polydataMapper->SetLookupTable(lut);
     polydataMapper->Update();
 
-    polydataActor = vtkSmartPointer<vtkActor>::New();
+//    polydataActor = vtkSmartPointer<vtkActor>::New();
     polydataActor->GetProperty()->EdgeVisibilityOff();
     polydataActor->SetMapper(polydataMapper);
     polydataActor->GetProperty()->SetOpacity(1);

@@ -1,7 +1,7 @@
-﻿/********************************************************************************
+/********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 5.14.2
+** Created by: Qt User Interface Compiler version 5.15.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -11,7 +11,9 @@
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QFormLayout>
 #include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenuBar>
@@ -19,9 +21,9 @@
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QSpinBox>
 #include <QtWidgets/QStatusBar>
-#include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include "QVTKWidget.h"
+#include "UI/mytablewidget.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -29,7 +31,7 @@ class Ui_MainWindow
 {
 public:
     QWidget *centralwidget;
-    QVBoxLayout *verticalLayout;
+    QFormLayout *formLayout;
     QHBoxLayout *horizontalLayout;
     QPushButton *inputFile_btn;
     QPushButton *outPut_btn;
@@ -39,6 +41,7 @@ public:
     QLabel *label_2;
     QLabel *fileName_label;
     QSpacerItem *horizontalSpacer;
+    MyTableWidget *tableWidget;
     QVTKWidget *qvtkWidget;
     QMenuBar *menubar;
     QStatusBar *statusbar;
@@ -47,11 +50,11 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
-        MainWindow->resize(1083, 813);
+        MainWindow->resize(1270, 786);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
-        verticalLayout = new QVBoxLayout(centralwidget);
-        verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
+        formLayout = new QFormLayout(centralwidget);
+        formLayout->setObjectName(QString::fromUtf8("formLayout"));
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         inputFile_btn = new QPushButton(centralwidget);
@@ -105,7 +108,19 @@ public:
         horizontalLayout->addItem(horizontalSpacer);
 
 
-        verticalLayout->addLayout(horizontalLayout);
+        formLayout->setLayout(0, QFormLayout::SpanningRole, horizontalLayout);
+
+        tableWidget = new MyTableWidget(centralwidget);
+        if (tableWidget->columnCount() < 2)
+            tableWidget->setColumnCount(2);
+        QTableWidgetItem *__qtablewidgetitem = new QTableWidgetItem();
+        tableWidget->setHorizontalHeaderItem(0, __qtablewidgetitem);
+        QTableWidgetItem *__qtablewidgetitem1 = new QTableWidgetItem();
+        tableWidget->setHorizontalHeaderItem(1, __qtablewidgetitem1);
+        tableWidget->setObjectName(QString::fromUtf8("tableWidget"));
+        tableWidget->setMinimumSize(QSize(200, 20));
+
+        formLayout->setWidget(1, QFormLayout::LabelRole, tableWidget);
 
         qvtkWidget = new QVTKWidget(centralwidget);
         qvtkWidget->setObjectName(QString::fromUtf8("qvtkWidget"));
@@ -115,12 +130,12 @@ public:
         sizePolicy.setHeightForWidth(qvtkWidget->sizePolicy().hasHeightForWidth());
         qvtkWidget->setSizePolicy(sizePolicy);
 
-        verticalLayout->addWidget(qvtkWidget);
+        formLayout->setWidget(1, QFormLayout::FieldRole, qvtkWidget);
 
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName(QString::fromUtf8("menubar"));
-        menubar->setGeometry(QRect(0, 0, 1083, 23));
+        menubar->setGeometry(QRect(0, 0, 1270, 22));
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName(QString::fromUtf8("statusbar"));
@@ -139,6 +154,10 @@ public:
         label->setText(QCoreApplication::translate("MainWindow", "\345\275\223\345\211\215\345\213\276\351\200\211\345\272\217\345\217\267", nullptr));
         label_2->setText(QCoreApplication::translate("MainWindow", "\345\275\223\345\211\215\350\275\275\345\205\245\347\232\204\346\226\207\344\273\266\357\274\232", nullptr));
         fileName_label->setText(QCoreApplication::translate("MainWindow", "TextLabel", nullptr));
+        QTableWidgetItem *___qtablewidgetitem = tableWidget->horizontalHeaderItem(0);
+        ___qtablewidgetitem->setText(QCoreApplication::translate("MainWindow", "\346\226\207\344\273\266\345\220\215\347\247\260", nullptr));
+        QTableWidgetItem *___qtablewidgetitem1 = tableWidget->horizontalHeaderItem(1);
+        ___qtablewidgetitem1->setText(QCoreApplication::translate("MainWindow", "\344\277\235\345\255\230\347\212\266\346\200\201", nullptr));
     } // retranslateUi
 
 };

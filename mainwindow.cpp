@@ -28,6 +28,8 @@ MainWindow::MainWindow(QWidget *parent)
     m_vtkEvtConn = vtkSmartPointer<vtkEventQtSlotConnect>::New();
     m_vtkEvtConn->Connect(m_vtkRenderWin->GetInteractor(),vtkCommand::KeyPressEvent,this,SLOT(valueChange()));
 
+    connect(ui->tableWidget,&MyTableWidget::clickFilePath,this,&MainWindow::openStlFile);
+
 }
 
 MainWindow::~MainWindow()
@@ -57,23 +59,33 @@ void MainWindow::saveConfig()
 
 }
 
-
-void MainWindow::on_inputFile_btn_clicked()
+void MainWindow::openStlFile(QString stlFilePath)
 {
-    QString fileName;
-    fileName = QFileDialog::getOpenFileName(this,
-                                                tr("文件对话框！"),
-                                                m_lastOpenPath,
-                                                "STL Files(*.stl)");
-    if (fileName.isEmpty())
-    {
-        return;
-    }
-    m_inputFileName = fileName;
-    m_lastOpenPath = fileName;
+    m_inputFileName = stlFilePath;
+    m_lastOpenPath = stlFilePath;
     ui->fileName_label->setText(m_inputFileName);
     showVTK();
     saveConfig();
+}
+
+
+void MainWindow::on_inputFile_btn_clicked()
+{
+    QStringList fileList = QFileDialog::getOpenFileNames(this,
+                                                tr("文件对话框！"),
+                                                m_lastOpenPath,
+                                                "STL Files(*.stl)");
+    if (fileList.isEmpty())
+    {
+        return;
+    }
+    m_inputFileName = fileList.at(0);
+    m_lastOpenPath = fileList.at(0);
+    ui->fileName_label->setText(m_inputFileName);
+//    showVTK();
+    saveConfig();
+
+    ui->tableWidget->addStlFileToTable(fileList);
 }
 
 void MainWindow::on_outPut_btn_clicked()
@@ -91,6 +103,9 @@ void MainWindow::on_outPut_btn_clicked()
     m_lastOpenPath = fileName;
     saveVTP();
     saveConfig();
+
+    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setBackground(QBrush(Qt::green));
+    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setText("已保存");
 }
 
 void MainWindow::valueChange()
