@@ -35,7 +35,7 @@ MyTableWidget::MyTableWidget(QWidget *parent)
 /**************************************************************************************************
  *函数名： addStlFileToTable
  *时间：   2022-09-12 12:24:08
- *用户：   李旺
+ *用户：
  *参数：   const QStringList &fileList  必须是stl文件
  *返回值： 无
  *描述：   添加stl文件到 表格中  过滤掉重复文件
@@ -61,7 +61,7 @@ void MyTableWidget::addStlFileToTable(const QStringList &fileList)
 /**************************************************************************************************
  *函数名： dragEnterEvent
  *时间：   2022-09-12 14:59:20
- *用户：   李旺
+ *用户：
  *参数：   QDragEnterEvent *event
  *返回值： 无
  *描述：   进入事件
@@ -84,7 +84,7 @@ void MyTableWidget::dragEnterEvent(QDragEnterEvent *event)
 /**************************************************************************************************
  *函数名： dropEvent
  *时间：   2022-09-12 14:53:16
- *用户：   李旺
+ *用户：
  *参数：   QDropEvent *event
  *返回值： 无
  *描述：   拖拽松开事件，过滤非stl文件，将stl文件表格中打开并显示

@@ -1,6 +1,5 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "label.cpp"
 #include <QFileDialog>
 #include <QDebug>
 #include <QTextCodec>
@@ -21,12 +20,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     loadConfig();
 
-    ui->qvtkWidget->SetRenderWindow(m_vtkRenderWin);
 
-    showVTK();
+    m_vtk.setWidget(ui->qvtkWidget);
+    m_vtk.showVtk(m_inputFileName);
+
+    m_vtk.showVtk(m_inputFileName);
     ui->fileName_label->setText(m_inputFileName);
     m_vtkEvtConn = vtkSmartPointer<vtkEventQtSlotConnect>::New();
-    m_vtkEvtConn->Connect(m_vtkRenderWin->GetInteractor(),vtkCommand::KeyPressEvent,this,SLOT(valueChange()));
+    m_vtkEvtConn->Connect(m_vtk.m_renderWindow->GetInteractor(),vtkCommand::KeyPressEvent,this,SLOT(valueChange()));
 
     connect(ui->tableWidget,&MyTableWidget::clickFilePath,this,&MainWindow::openStlFile);
 
@@ -41,6 +42,7 @@ MainWindow::~MainWindow()
 void MainWindow::loadConfig()
 {
     m_config->beginGroup("path");
+
     m_inputFileName  = m_config->value("INPUT_FILE_NAME").toString();
     m_outputFileName = m_config->value("OUTPUT_FILE_NAME").toString();
     m_lastOpenPath   = m_config->value("LAST_OPEN_PATH").toString();
@@ -64,7 +66,7 @@ void MainWindow::openStlFile(QString stlFilePath)
     m_inputFileName = stlFilePath;
     m_lastOpenPath = stlFilePath;
     ui->fileName_label->setText(m_inputFileName);
-    showVTK();
+    m_vtk.showVtk(m_inputFileName);
     saveConfig();
 }
 
@@ -82,7 +84,7 @@ void MainWindow::on_inputFile_btn_clicked()
     m_inputFileName = fileList.at(0);
     m_lastOpenPath = fileList.at(0);
     ui->fileName_label->setText(m_inputFileName);
-//    showVTK();
+    m_vtk.showVtk(m_inputFileName);
     saveConfig();
 
     ui->tableWidget->addStlFileToTable(fileList);
@@ -101,7 +103,7 @@ void MainWindow::on_outPut_btn_clicked()
     }
     m_outputFileName = fileName;
     m_lastOpenPath = fileName;
-    saveVTP();
+    m_vtk.saveVtP(m_outputFileName);
     saveConfig();
 
     ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setBackground(QBrush(Qt::green));
@@ -111,17 +113,17 @@ void MainWindow::on_outPut_btn_clicked()
 void MainWindow::valueChange()
 {
 //    qDebug()<<"ValueChange" << PressFlag;
-    ui->spinBox->setValue(PressFlag);
+    ui->spinBox->setValue(m_vtk.KeyPressFlag);
 }
 
 
 void MainWindow::on_spinBox_valueChanged(int arg1)
 {
-    if(PressFlag == arg1)
+    if(m_vtk.KeyPressFlag == arg1)
     {
         return;
     }
 
-    PressFlag = arg1;
+    m_vtk.KeyPressFlag = arg1;
 
 }

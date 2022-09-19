@@ -6,6 +6,7 @@
 #include <qevent.h>
 #include <vtkEventQtSlotConnect.h>
 #include <vtkSmartPointer.h>
+#include "VTK/vtkshow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -38,6 +39,10 @@ private:
     QString m_lastOpenPath; //最后一次打开文件的路径
     QSettings  *m_config;
     vtkSmartPointer<vtkEventQtSlotConnect> m_vtkEvtConn;
+
+    VtkShow m_vtk;
+    QString m_inputFileName;
+    QString m_outputFileName;
 
 };
 #endif // MAINWINDOW_H
