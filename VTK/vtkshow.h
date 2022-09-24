@@ -2,13 +2,17 @@
 #define VTKSHOW_H
 /**************************************************************************************************
 此类是VTK操作，用于显示VTK和模型的交互
+方法改进: 是否可以通过style 来用面向对象的方式来实现鼠标的事件，这样就可以不使用静态函数来做了。
+将style 需要的对象都传入进去，
 *************************************************************************************************/
 
 #include <QWidget>
 #include <QString>
-#include <vtkLookupTable.h>
+#include <QDebug>
+
 
 //vtk
+#include <vtkLookupTable.h>
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <QVTKWidget.h>
 #include <vtkSmartPointer.h>
@@ -24,6 +28,8 @@
 #include <vtkDataArray.h>
 #include <vtkPolyData.h>
 #include <vtkCellData.h>
+#include <vtkCamera.h>
+#include <vtkViewport.h>
 
 
 #include <vtkAutoInit.h>
@@ -31,7 +37,6 @@ VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
 VTK_MODULE_INIT(vtkRenderingFreeType)
 using namespace std;
-
 
 
 
@@ -54,7 +59,36 @@ public:
     virtual void OnMouseMove() override { this->vtkInteractorStyleTrackballCamera::OnMouseMove(); }
     virtual void OnMouseWheelForward() override;
     virtual void OnMouseWheelBackward() override;
+    virtual void OnChar() override;
 };
+
+/**************************************************************************************************
+ *函数名：OnChar
+ *时间：   2022-09-25 00:42:59
+ *用户：   李旺
+ *参数：  无
+ *返回值：无
+ *描述：  重写事件覆盖原有按键操作 屏蔽按键
+ *      按键事件传递过程(数字键或字母键）
+ *      1.vtkInteractorStyleTrackballCamera::OnKeyPress()
+ *      2.vtkCallbackCommand::KeyPressFunction()
+ *      3.vtkInteractorStyleTrackballCamera::OnChar()
+ *      4.vtkCallbackCommand::charEventFunction()
+ *
+ *      ctrl 或者shift键等 则
+ *      1.vtkInteractorStyleTrackballCamera::OnKeyPress()
+ *      2.vtkCallbackCommand::KeyPressFunction()
+*************************************************************************************************/
+inline void DesignInteractorStyle::OnChar()
+{
+    vtkRenderWindowInteractor *rwi = this->Interactor;
+    const std::string key = rwi->GetKeySym();
+    if ("s" == key || "w" == key || "3" == key)
+    {
+        return;
+    }
+    vtkInteractorStyleTrackballCamera::OnChar();
+}
 
 class VtkShow : public QWidget
 {
@@ -80,6 +114,9 @@ public:
     static void MouseMoveFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
     static void MouseWheelForwardFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
     static void MouseWheelBackwardFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
+
+    //获取鼠标点击与模型的cellID号(可能是多个）
+    static bool getOBBTreeIntersectWithLine(vtkRenderWindowInteractor *vtkInter, vtkPolyData *polyData, vtkPoints *intersecPoints, vtkIdList *intersecCells);
 
     static vtkNew<vtkCallbackCommand> MouseMoveCallback;
     static vtkNew<vtkCallbackCommand> LeftButtonPressCallback;
@@ -113,7 +150,6 @@ private:
     void initCallbackCommand();
 
 signals:
-
 
 private:
     QVTKWidget *m_vtkWidget;

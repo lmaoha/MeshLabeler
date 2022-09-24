@@ -14,8 +14,17 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QFormLayout" name="formLayout">
-    <item row="0" column="0" colspan="2">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="leftMargin">
+     <number>9</number>
+    </property>
+    <property name="topMargin">
+     <number>9</number>
+    </property>
+    <property name="rightMargin">
+     <number>9</number>
+    </property>
+    <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <widget class="QPushButton" name="inputFile_btn">
@@ -138,33 +147,55 @@
       </item>
      </layout>
     </item>
-    <item row="1" column="0">
-     <widget class="MyTableWidget" name="tableWidget">
-      <property name="minimumSize">
-       <size>
-        <width>200</width>
-        <height>20</height>
-       </size>
-      </property>
-      <column>
-       <property name="text">
-        <string>文件名称</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>保存状态</string>
-       </property>
-      </column>
-     </widget>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="MyTableWidget" name="tableWidget">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>20</height>
+         </size>
+        </property>
+        <column>
+         <property name="text">
+          <string>文件名称</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>保存状态</string>
+         </property>
+        </column>
+       </widget>
+      </item>
+      <item>
+       <widget class="QVTKWidget" name="qvtkWidget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
-    <item row="1" column="1">
-     <widget class="QVTKWidget" name="qvtkWidget" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
+    <item>
+     <widget class="QLabel" name="label_3">
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>快捷键： 单独选择: ”S“   连续选择三角面片: ”D“   复位视角: &quot;R&quot;    选择标注颜色: &quot;1-9&quot;   清除选择 &quot;按下shift&quot;    设置选择球大小:&quot;按下Ctrl+滚轮“</string>
       </property>
      </widget>
     </item>

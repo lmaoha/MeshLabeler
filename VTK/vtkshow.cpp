@@ -1,12 +1,16 @@
 ﻿#include "vtkshow.h"
 
-#include <QDebug>
 #include <vtkCallbackCommand.h>
 #include <vtkCellPicker.h>
 #include <vtkSphereSource.h>
 #include <vtkRendererCollection.h>
 #include <vtkFeatureEdges.h>
 #include <vtkFloatArray.h>
+#include <vtkLineSource.h>
+#include <vtkAxesActor.h>
+#include <vtkOBBTree.h>
+#include <vtkTriangleFilter.h>
+#include <vtkPoints.h>
 
 bool VtkShow::LeftButtonIsPress = 0;
 int VtkShow::KeyPressFlag = 0;
@@ -24,11 +28,12 @@ vtkNew<vtkCallbackCommand> VtkShow::KeyPressCallback;
 vtkNew<vtkCallbackCommand> VtkShow::KeyReleaseCallback;
 vtkNew<vtkCallbackCommand> VtkShow::MouseWheelForwardCallback;
 vtkNew<vtkCallbackCommand> VtkShow::MouseWheelBackwardCallback;
-
 vtkNew<vtkLookupTable> VtkShow::lut;              //不同色差
 vtkNew<vtkActor> VtkShow::sphereActor;            //鼠标跟随球
 vtkNew<vtkActor> VtkShow::polydataActor;          //载入模型actor
 vtkSmartPointer<vtkPolyData> VtkShow::polydata;   //载入模型的polyData
+
+
 
 VtkShow::VtkShow(QWidget *parent)
     : QWidget{parent}
@@ -49,6 +54,7 @@ void VtkShow::setWidget(QVTKWidget *vtkWidget)
     m_vtkWidget = vtkWidget;
     m_renderer = vtkSmartPointer<vtkRenderer>::New();
     m_renderer->SetBackground(m_colors->GetColor3d("SkyBlue").GetData());
+    m_renderer->GetActiveCamera()->SetParallelProjection(1); //关键一步 平行投影
 
     m_renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
     m_renderWindow->AddRenderer(m_renderer);
@@ -77,7 +83,11 @@ int VtkShow::showVtk(const QString stlFileName)
     vtkNew<vtkSTLReader> STLReader;
     STLReader->SetFileName(stlFileName.toLocal8Bit().data()); //修复中文路径无法打开文件的bug
     STLReader->Update();
-    polydata = STLReader->GetOutput();
+
+    vtkNew<vtkTriangleFilter> triangle;
+    triangle->SetInputConnection(STLReader->GetOutputPort());
+    triangle->Update();
+    polydata = triangle->GetOutput();
 
     vtkNew<vtkFeatureEdges> featureEdges;
     featureEdges->SetInputData(polydata);
@@ -121,6 +131,7 @@ int VtkShow::showVtk(const QString stlFileName)
     polydataActor->GetProperty()->EdgeVisibilityOff();
     polydataActor->SetMapper(polydataMapper);
     polydataActor->GetProperty()->SetOpacity(1);
+//    polydataActor->GetProperty()->SetColor(lut->GetTableValue(20));
     m_renderer->AddActor(polydataActor);
 
     m_renderer->SetBackground(vtkColor->GetColor3d("AliceBlue").GetData());
@@ -148,7 +159,6 @@ int VtkShow::showVtk(const QString stlFileName)
     vtkInter->AddObserver(vtkCommand::MouseMoveEvent, MouseMoveCallback);
     vtkInter->AddObserver(vtkCommand::MouseWheelForwardEvent, MouseWheelForwardCallback);
     vtkInter->AddObserver(vtkCommand::MouseWheelBackwardEvent, MouseWheelBackwardCallback);
-
     m_renderer->ResetCamera();
     m_renderWindow->Render();
 
@@ -215,19 +225,31 @@ void VtkShow::BFS(double*Position,int TriID)
     return;
 }
 
+/**************************************************************************************************
+ *函数名： LeftButtonPressFunction
+ *时间：   2022-09-25 02:14:02
+ *用户：   李旺
+ *参数：
+ *返回值：
+ *描述：  鼠标单击 通过obbtree 选中三角面 设置标量来改变颜色
+*************************************************************************************************/
 void VtkShow::LeftButtonPressFunction(vtkObject *caller, unsigned long eventId, void *clientData, void *callData)
 {
     LeftButtonIsPress = true;
     vtkRenderWindowInteractor* vtkInter = vtkRenderWindowInteractor::SafeDownCast(caller);
-    int* pEvtPos = vtkInter->GetEventPosition();
-    auto renderer = vtkInter->FindPokedRenderer(pEvtPos[0], pEvtPos[1]);
-    vtkNew<vtkCellPicker> vtkCurPicker;
-    vtkInter->SetPicker(vtkCurPicker);
-    vtkInter->GetPicker()->Pick(pEvtPos[0], pEvtPos[1], 0, renderer);
-    double Position[3];
-    vtkCurPicker->GetPickPosition(Position);
-    int TriID = vtkCurPicker->GetCellId();
-    polydata->GetCellData()->GetScalars()->SetTuple1(TriID, KeyPressFlag);
+    auto renderer = vtkInter->GetRenderWindow()->GetRenderers()->GetFirstRenderer();
+
+    vtkNew<vtkIdList> intersecCells;   //相交cell集合
+    vtkNew<vtkPoints> intersecPoints;
+    bool bRet = getOBBTreeIntersectWithLine(vtkInter,polydata,intersecPoints,intersecCells);
+
+    if (!bRet || intersecCells->GetNumberOfIds() < 0)
+    {
+        return;
+    }
+    vtkIdType TriID =intersecCells->GetId(0);
+
+    polydata->GetCellData()->GetScalars()->SetTuple1(TriID, KeyPressFlag);    //改变向量的值
     polydata->GetCellData()->Modified();
     polydata->GetCellData()->GetScalars()->Modified();
     renderer->GetRenderWindow()->Render();
@@ -236,11 +258,11 @@ void VtkShow::LeftButtonPressFunction(vtkObject *caller, unsigned long eventId, 
 void VtkShow::LeftButtonReleaseFunction(vtkObject *caller, unsigned long eventId, void *clientData, void *callData)
 {
     LeftButtonIsPress = false;
-
 }
 
 void VtkShow::MiddleButtonPressFunction(vtkObject *caller, unsigned long eventId, void *clientData, void *callData)
 {
+
 
 }
 
@@ -271,7 +293,8 @@ void VtkShow::KeyPressFunction(vtkObject *caller, unsigned long eventId, void *c
         vtkRender->RemoveActor(sphereActor);
         return;
     }
-    if ('r' == flag)
+
+    if ('d' == flag)
     {
         triangleSelectMode = SelectMode::MultipleSelect;
         polydataActor->GetProperty()->EdgeVisibilityOff();
@@ -298,26 +321,22 @@ void VtkShow::KeyReleaseFunction(vtkObject *caller, unsigned long eventId, void 
 void VtkShow::MouseMoveFunction(vtkObject *caller, unsigned long eventId, void *clientData, void *callData)
 {
     vtkRenderWindowInteractor *vtkInter = vtkRenderWindowInteractor::SafeDownCast(caller);
-    int *pEvtPos = vtkInter->GetEventPosition();
+    auto renderer = vtkInter->GetRenderWindow()->GetRenderers()->GetFirstRenderer();
 
-    //获取renderer
-    auto renderer = vtkInter->FindPokedRenderer(pEvtPos[0], pEvtPos[1]);
+    vtkNew<vtkPoints> intersecPoints;  //交互点集合
+    vtkNew<vtkIdList> intersecCells;   //相交cell集合
+    bool bRet = getOBBTreeIntersectWithLine(vtkInter,polydata,intersecPoints,intersecCells);
 
-    vtkNew<vtkCellPicker> vtkCurPicker;
-    vtkInter->SetPicker(vtkCurPicker);
-
-    //根据屏幕像素获取actor实际位置
-    vtkInter->GetPicker()->Pick(pEvtPos[0], pEvtPos[1], 0, renderer);
-    double Position[3];
-    vtkCurPicker->GetPickPosition(Position);
-    int TriID = vtkCurPicker->GetCellId();
-
-    if (-1 == TriID)
+    if (!bRet)
     {
         return;
     }
+    double position[3];
+    intersecPoints->GetPoint(0,position);
+    vtkIdType TriID =intersecCells->GetId(0);
+
     vtkNew<vtkSphereSource>  sphere;
-    sphere->SetCenter(Position);
+    sphere->SetCenter(position);
     sphere->SetRadius(MouseSphereRadius);
     sphere->SetPhiResolution(36);
     sphere->SetThetaResolution(36);
@@ -339,7 +358,7 @@ void VtkShow::MouseMoveFunction(vtkObject *caller, unsigned long eventId, void *
 
     if (SelectMode::MultipleSelect == triangleSelectMode)
     {
-        BFS(Position, TriID);
+        BFS(position, TriID);
         polydata->GetCellData()->Modified();
         polydata->GetCellData()->GetScalars()->Modified();
         renderer->GetRenderWindow()->Render();
@@ -422,6 +441,51 @@ void VtkShow::MouseWheelBackwardFunction(vtkObject *caller, unsigned long eventI
     vtkRender->GetRenderWindow()->Render();
 }
 
+/**************************************************************************************************
+ *函数名： getOBBTreeIntersectWithLine
+ *时间：   2022-09-25 01:34:41
+ *用户：   李旺
+ *参数：   const vtkRenderWindowInteractor *vtkInter,  交互器对象
+ *        const vtkPolyData *polyData, 与之相交的对象
+ *        vtkPoints *intersecPoints    与polydata 相交点集合
+ *        vtkIdList *intersecCells     与cell相交的集合
+ *返回值： 有相交的cell true  无相交的 false
+ *描述：   获取 鼠标当前位置与模型相交的cellIDs的集合（cells可能有多个)
+*************************************************************************************************/
+bool VtkShow::getOBBTreeIntersectWithLine(vtkRenderWindowInteractor *vtkInter, vtkPolyData *polyData,
+                                  vtkPoints *intersecPoints, vtkIdList *intersecCells)
+{
+    int* pEvtPos      = vtkInter->GetEventPosition();
+    auto renderer     = vtkInter->FindPokedRenderer(pEvtPos[0], pEvtPos[1]);
+    double* pViewDir  = renderer->GetActiveCamera()->GetDirectionOfProjection(); // 当前视角向量
+
+    renderer->SetDisplayPoint(pEvtPos[0], pEvtPos[1], 0);
+    renderer->DisplayToWorld();
+
+    //通过OBBTree来做
+    double worldPos[3];  //屏幕像素投影到零件的实际位置
+    double endPos[3];   // 投影射线终点
+    renderer->GetWorldPoint(worldPos);
+    for (int i = 0; i < 3;i++)
+    {
+        endPos[i] = pViewDir[i] * 1000 + worldPos[i];
+    }
+
+    vtkNew<vtkOBBTree> obbTree;
+    obbTree->SetDataSet(polyData);
+    obbTree->BuildLocator();
+
+    int iRet = obbTree->IntersectWithLine(worldPos,endPos,intersecPoints,intersecCells);
+
+    if (0 == iRet || intersecPoints->GetNumberOfPoints() < 0 ||intersecCells->GetNumberOfIds() < 0)
+    {
+        return false;
+    }
+    return true;
+}
+
+
+
 
 
 void VtkShow::initCallbackCommand()
@@ -448,6 +512,9 @@ void VtkShow::initCallbackCommand()
     MouseWheelForwardCallback->InitializeObjectBase();
     MouseWheelBackwardCallback->SetCallback(MouseWheelBackwardFunction);
     MouseWheelBackwardCallback->InitializeObjectBase();
+
+
+
 }
 
 
