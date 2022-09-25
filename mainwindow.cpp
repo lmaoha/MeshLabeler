@@ -26,8 +26,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_vtk.showVtk(m_inputFileName);
     ui->fileName_label->setText(m_inputFileName);
-    m_vtkEvtConn = vtkSmartPointer<vtkEventQtSlotConnect>::New();
-    m_vtkEvtConn->Connect(m_vtk.m_renderWindow->GetInteractor(),vtkCommand::KeyPressEvent,this,SLOT(valueChange()));
+
+    m_vtk.m_vtkStyle->connect(m_vtk.m_vtkStyle,&DesignInteractorStyle::sig_keyPressNumber,this,&MainWindow::valueChange);
+    m_vtk.m_vtkStyle->connect(this,&MainWindow::KeyPressNumber,m_vtk.m_vtkStyle,&DesignInteractorStyle::slot_changeKeyPressNumber);
 
     connect(ui->tableWidget,&MyTableWidget::clickFilePath,this,&MainWindow::openStlFile);
 
@@ -110,20 +111,13 @@ void MainWindow::on_outPut_btn_clicked()
     ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setText("已保存");
 }
 
-void MainWindow::valueChange()
+void MainWindow::valueChange(int number)
 {
-//    qDebug()<<"ValueChange" << PressFlag;
-    ui->spinBox->setValue(m_vtk.KeyPressFlag);
+    ui->spinBox->setValue(number);
 }
 
 
 void MainWindow::on_spinBox_valueChanged(int arg1)
 {
-    if(m_vtk.KeyPressFlag == arg1)
-    {
-        return;
-    }
-
-    m_vtk.KeyPressFlag = arg1;
-
+    emit KeyPressNumber(arg1);
 }

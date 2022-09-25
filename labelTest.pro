@@ -17,12 +17,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     UI/mytablewidget.cpp \
+    VTK/designinteractorstyle.cpp \
     VTK/vtkshow.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     UI/mytablewidget.h \
+    VTK/designinteractorstyle.h \
     VTK/vtkshow.h \
     mainwindow.h
 

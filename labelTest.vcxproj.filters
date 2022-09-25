@@ -37,6 +37,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="VTK\designinteractorstyle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -51,6 +54,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="VTK\designinteractorstyle.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
     <QtMoc Include="mainwindow.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -62,6 +68,8 @@
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
+    
+    
     
     
     

@@ -104,7 +104,7 @@
          </font>
         </property>
         <property name="maximum">
-         <number>9</number>
+         <number>20</number>
         </property>
        </widget>
       </item>
@@ -195,7 +195,7 @@
        </font>
       </property>
       <property name="text">
-       <string>快捷键： 单独选择: ”S“   连续选择三角面片: ”D“   复位视角: &quot;R&quot;    选择标注颜色: &quot;1-9&quot;   清除选择 &quot;按下shift&quot;    设置选择球大小:&quot;按下Ctrl+滚轮“</string>
+       <string>快捷键： 单独选择: &quot;S&quot;   连续选择三角面片: &quot;D&quot;   复位视角: &quot;R&quot;    选择标注颜色: &quot;1-9&quot;   清除选择 &quot;按下shift&quot;    设置选择球大小:&quot;按下Ctrl+滚轮&quot;</string>
       </property>
      </widget>
     </item>

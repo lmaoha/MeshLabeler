@@ -25,20 +25,23 @@ public:
 
     void openStlFile(QString stlFilePath);
 
+signals:
+    void KeyPressNumber(int number);
+
 private slots:
     void on_inputFile_btn_clicked();
 
     void on_outPut_btn_clicked();
 
-    void valueChange();
+    void valueChange(int number);
     void on_spinBox_valueChanged(int arg1);
+
 
 private:
     Ui::MainWindow *ui;
     QString m_appPath;      //程序路径所在位置
     QString m_lastOpenPath; //最后一次打开文件的路径
     QSettings  *m_config;
-    vtkSmartPointer<vtkEventQtSlotConnect> m_vtkEvtConn;
 
     VtkShow m_vtk;
     QString m_inputFileName;
