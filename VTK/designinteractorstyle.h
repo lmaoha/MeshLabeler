@@ -37,6 +37,7 @@ public:
     virtual void OnMouseWheelForward() override;
     virtual void OnMouseWheelBackward() override;
     virtual void OnKeyPress() override;
+    virtual void OnKeyRelease() override;
     virtual void OnChar() override;
 
 
@@ -64,7 +65,9 @@ private:
     bool m_leftButtonIsPress  = false;
     bool m_rightButtonIsPress = false;
     bool m_midButtonIsPress   = false;
+    bool m_bShiftKeyIsPress = false;
     int m_keyPressNumber = 0;     //按下的数字键
+    int m_lastKeyPressNumber =0;  //上一个按下的数字键(在按下shift键后保存，用于恢复)
     double MouseSphereRadius = 2.5;
 
     enum SelectMode
@@ -76,6 +79,7 @@ private:
 
 signals:
     void sig_keyPressNumber(int number);
+
 
 
 

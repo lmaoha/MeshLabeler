@@ -11,6 +11,8 @@
 #include <vtkOBBTree.h>
 #include <vtkTriangleFilter.h>
 #include <vtkPoints.h>
+#include <vtkXMLPolyDataReader.h>
+#include <vtkPlyReader.h>
 
 VtkShow::VtkShow(QWidget *parent)
     : QWidget{parent}
@@ -55,14 +57,36 @@ int VtkShow::showVtk(const QString stlFileName)
     {
         return -1;
     }
+    vtkNew<vtkTriangleFilter> triangle;
 
     m_renderer->RemoveAllViewProps();
-    vtkNew<vtkSTLReader> STLReader;
-    STLReader->SetFileName(stlFileName.toLocal8Bit().data()); //修复中文路径无法打开文件的bug
-    STLReader->Update();
+    if (0 == stlFileName.right(4).compare(".stl",Qt::CaseInsensitive))
+    {
+        vtkNew<vtkSTLReader> STLReader;
+        STLReader->SetFileName(stlFileName.toLocal8Bit().data()); //修复中文路径无法打开文件的bug
+        STLReader->Update();
+        triangle->SetInputConnection(STLReader->GetOutputPort());
 
-    vtkNew<vtkTriangleFilter> triangle;
-    triangle->SetInputConnection(STLReader->GetOutputPort());
+    }
+    else if(0 == stlFileName.right(4).compare(".vtp",Qt::CaseInsensitive))
+    {
+        vtkNew<vtkXMLPolyDataReader> vtpReader;
+        vtpReader->SetFileName(stlFileName.toLocal8Bit().data());
+        vtpReader->Update();
+        triangle->SetInputConnection(vtpReader->GetOutputPort());
+    }
+    else if (0 == stlFileName.right(4).compare(".ply",Qt::CaseInsensitive))
+    {
+        vtkNew<vtkPLYReader> plyReader;
+        plyReader->SetFileName(stlFileName.toLocal8Bit().data());
+        plyReader->Update();
+        triangle->SetInputConnection(plyReader->GetOutputPort());
+    }
+    else
+    {
+        return -1;
+    }
+
     triangle->Update();
     polydata = triangle->GetOutput();
 
@@ -117,7 +141,6 @@ int VtkShow::showVtk(const QString stlFileName)
 
     m_renderWindow->Render();
     vtkNew<vtkRenderWindowInteractor> vtkInter;
-    m_renderWindow->SetSize(1920, 1080);
     m_vtkStyle->setRenderer(m_renderer);
     m_vtkStyle->setPolyData(polydata);
     m_vtkStyle->setPolyDataActor(polydataActor);

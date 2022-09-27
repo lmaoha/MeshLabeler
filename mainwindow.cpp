@@ -24,7 +24,6 @@ MainWindow::MainWindow(QWidget *parent)
     m_vtk.setWidget(ui->qvtkWidget);
     m_vtk.showVtk(m_inputFileName);
 
-    m_vtk.showVtk(m_inputFileName);
     ui->fileName_label->setText(m_inputFileName);
 
     m_vtk.m_vtkStyle->connect(m_vtk.m_vtkStyle,&DesignInteractorStyle::sig_keyPressNumber,this,&MainWindow::valueChange);
@@ -77,7 +76,9 @@ void MainWindow::on_inputFile_btn_clicked()
     QStringList fileList = QFileDialog::getOpenFileNames(this,
                                                 tr("文件对话框！"),
                                                 m_lastOpenPath,
-                                                "STL Files(*.stl)");
+                                                "VTP File(*.vtp);;"
+                                                "STL File(*.stl);;"
+                                                "PLY File(*.ply)");
     if (fileList.isEmpty())
     {
         return;
@@ -107,8 +108,8 @@ void MainWindow::on_outPut_btn_clicked()
     m_vtk.saveVtP(m_outputFileName);
     saveConfig();
 
-    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setBackground(QBrush(Qt::green));
-    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setText("已保存");
+//    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setBackground(QBrush(Qt::green));
+//    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setText("已保存");
 }
 
 void MainWindow::valueChange(int number)

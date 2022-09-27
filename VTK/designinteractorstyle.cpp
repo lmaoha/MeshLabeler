@@ -164,6 +164,7 @@ inline void DesignInteractorStyle::OnChar()
 {
     vtkRenderWindowInteractor *rwi = this->Interactor;
     const std::string key = rwi->GetKeySym();
+    qDebug()<<"key: "<<QString::fromStdString(key);
     if ("s" == key || "w" == key || "3" == key)
     {
         return;
@@ -174,7 +175,7 @@ inline void DesignInteractorStyle::OnChar()
 
 void DesignInteractorStyle::OnMouseWheelForward()
 {
-    if (!this->Interactor->GetControlKey() && !this->Interactor->GetShiftKey())
+    if (!this->Interactor->GetControlKey())
     {
         this->vtkInteractorStyleTrackballCamera::OnMouseWheelForward();
         return;
@@ -214,7 +215,7 @@ void DesignInteractorStyle::OnMouseWheelForward()
 
 void DesignInteractorStyle::OnMouseWheelBackward()
 {
-    if (!this->Interactor->GetControlKey() && !this->Interactor->GetShiftKey())
+    if (!this->Interactor->GetControlKey())
     {
         this->vtkInteractorStyleTrackballCamera::OnMouseWheelBackward();
         return;
@@ -257,6 +258,8 @@ void DesignInteractorStyle::OnMouseWheelBackward()
 void DesignInteractorStyle::OnKeyPress()
 {
     char flag = this->Interactor->GetKeyCode();
+    qDebug()<<"flag: "<< flag;
+
     if ('s' == flag)
     {
         triangleSelectMode = SelectMode::SingleSelect;
@@ -271,15 +274,38 @@ void DesignInteractorStyle::OnKeyPress()
         m_polyDataActor->GetProperty()->EdgeVisibilityOff();
         return;
     }
+
+    //shift 按下数字变为0 并保存原有数字
+    if (this->Interactor->GetShiftKey())
+    {
+        m_bShiftKeyIsPress = true;
+        m_lastKeyPressNumber = m_keyPressNumber;
+        m_keyPressNumber = 0;
+        emit sig_keyPressNumber(m_keyPressNumber);
+        return;
+    }
+
     if (flag - '0' > 9 || flag - '0' < 0)
     {
         return;
     }
+
     m_keyPressNumber = flag - '0';
     emit sig_keyPressNumber(m_keyPressNumber);
 }
 
 
+void DesignInteractorStyle::OnKeyRelease()
+{
+    //shift 松开恢复原有数字
+    if (m_bShiftKeyIsPress && !this->Interactor->GetShiftKey())
+    {
+        m_bShiftKeyIsPress = false;
+        m_keyPressNumber = m_lastKeyPressNumber;
+        emit sig_keyPressNumber(m_keyPressNumber);
+        this->vtkInteractorStyleTrackballCamera::OnKeyRelease();
+    }
+}
 
 void DesignInteractorStyle::setPolyData(vtkPolyData *newPolyData)
 {
