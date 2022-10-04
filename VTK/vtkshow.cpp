@@ -23,6 +23,7 @@
 #include <vtkSelectVisiblePoints.h>
 #include <vtkLabeledDataMapper.h>
 #include <vtkDataArray.h>
+#include <QFileInfo>
 #include "UI/colortablewidget.h"
 #include <vtkDataArray.h>
 
@@ -66,11 +67,10 @@ void VtkShow::setWidget(QVTKWidget *vtkWidget)
 *************************************************************************************************/
 int VtkShow::showVtk(const QString stlFileName)
 {
-    if (stlFileName.isEmpty())
+    if (stlFileName.isEmpty() || !QFileInfo(stlFileName).isFile())
     {
         return -1;
     }
-    vtkNew<vtkTriangleFilter> triangle;
 
     m_renderer->RemoveAllViewProps();
     if (0 == stlFileName.right(4).compare(".stl",Qt::CaseInsensitive))
