@@ -16,6 +16,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    UI/colortablewidget.cpp \
     UI/mytablewidget.cpp \
     VTK/designinteractorstyle.cpp \
     VTK/vtkshow.cpp \
@@ -23,6 +24,7 @@ SOURCES += \
     mainwindow.cpp
 
 HEADERS += \
+    UI/colortablewidget.h \
     UI/mytablewidget.h \
     VTK/designinteractorstyle.h \
     VTK/vtkshow.h \
@@ -41,6 +43,10 @@ QMAKE_CXXFLAGS_RELEASE = $$QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO
 QMAKE_LFLAGS_RELEASE = $$QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO
 
 UI_DIR = $$PWD
-
+msvc {
+QMAKE_CFLAGS += /utf-8
+QMAKE_CXXFLAGS += /utf-8
+}
 include(VTKlib.pri)
+
 

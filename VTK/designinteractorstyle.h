@@ -7,7 +7,9 @@
 
 //vtk
 #include <vtkActor.h>
+#include <vtkActor2D.h>
 #include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkLookupTable.h>
 #include <vtkLookupTable.h>
 #include <vtkRenderWindow.h>
 
@@ -25,8 +27,21 @@ public:
 
     virtual ~DesignInteractorStyle() {}
 
+    void setPolyData(vtkPolyData *newPolyData);
+    void setRenderer(vtkRenderer *newRenderer);
+
+    void setPolyDataActor(vtkActor *newPolyDataActor);
+
+    void setLut(vtkLookupTable *newLut);
+
+signals:
+    void sig_keyPressNumber(int number);
+
+public slots:
+    void slot_changeKeyPressNumber(int number);
+
     // vtkInteractorStyle interface
-public:
+protected:
     virtual void OnLeftButtonDown() override;
     virtual void OnLeftButtonUp() override;
     virtual void OnRightButtonDown() override; // 避免vtk的GrabFocus接口占用交互命令
@@ -41,22 +56,26 @@ public:
     virtual void OnChar() override;
 
 
-    void setPolyData(vtkPolyData *newPolyData);
-    void setRenderer(vtkRenderer *newRenderer);
-
-    void setPolyDataActor(vtkActor *newPolyDataActor);
-
-public slots:
-    void slot_changeKeyPressNumber(int number);
 
 private:
+    //OBBtree与 直线与模型的相交点
     bool getOBBTreeIntersectWithLine(vtkPolyData *polyData, vtkPoints *intersecPoints, vtkIdList *intersecCells);
-    void BFS(double *Position, int TriID);
-    bool CellInSphere(double *Position, int TriID);
+
+    //循环寻找点
+    void BFS(const double *Position, const int TriID);
+
+    //cell包含在球内
+    bool CellInSphere(const double *Position, int TriID);
+
+    void showCellID();
 
 private:
     vtkNew<vtkActor> m_sphereActor;   //球actor
-    vtkNew<vtkLookupTable> m_lut;     //色卡
+    vtkLookupTable *m_lut;     //色卡
+
+    vtkNew<vtkActor2D> cellLabels;
+    vtkNew<vtkActor2D> rectActor;
+    vtkNew<vtkActor2D> pointLabels;
 
     vtkPolyData *m_polyData;
     vtkActor *m_polyDataActor;
@@ -66,9 +85,9 @@ private:
     bool m_rightButtonIsPress = false;
     bool m_midButtonIsPress   = false;
     bool m_bShiftKeyIsPress = false;
-    int m_keyPressNumber = 0;     //按下的数字键
-    int m_lastKeyPressNumber =0;  //上一个按下的数字键(在按下shift键后保存，用于恢复)
-    double MouseSphereRadius = 2.5;
+    int m_keyPressNumber = 1;     //按下的数字键
+    int m_lastKeyPressNumber = 0;  //上一个按下的数字键(在按下shift键后保存，用于恢复)
+    double MouseSphereRadius = 2.5;  //原始2.5
 
     enum SelectMode
     {
@@ -77,8 +96,7 @@ private:
     };
     SelectMode triangleSelectMode = MultipleSelect;
 
-signals:
-    void sig_keyPressNumber(int number);
+
 
 
 

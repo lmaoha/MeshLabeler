@@ -1,5 +1,4 @@
 ﻿#include "mainwindow.h"
-
 #include <QApplication>
 #include <vtkOutputWindow.h>
 

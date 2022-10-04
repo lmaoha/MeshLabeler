@@ -54,8 +54,8 @@ public:
     vtkNew<DesignInteractorStyle> m_vtkStyle;
 
 private:
-    void initCallbackCommand();
 
+    void iniColorTable();
 signals:
 
 private:

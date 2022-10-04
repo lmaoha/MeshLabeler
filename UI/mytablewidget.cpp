@@ -28,7 +28,6 @@ MyTableWidget::MyTableWidget(QWidget *parent)
         //倒序索引
         int index = m_fileList.count() - 1 - row;
         emit clickFilePath(m_fileList.at(index));
-
     });
 }
 

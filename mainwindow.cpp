@@ -20,17 +20,29 @@ MainWindow::MainWindow(QWidget *parent)
 
     loadConfig();
 
-
     m_vtk.setWidget(ui->qvtkWidget);
     m_vtk.showVtk(m_inputFileName);
 
     ui->fileName_label->setText(m_inputFileName);
 
-    m_vtk.m_vtkStyle->connect(m_vtk.m_vtkStyle,&DesignInteractorStyle::sig_keyPressNumber,this,&MainWindow::valueChange);
+    m_vtk.m_vtkStyle->connect(m_vtk.m_vtkStyle,&DesignInteractorStyle::sig_keyPressNumber,this
+                              ,[&](int keyNumber)
+    {
+        ui->colorTabel->selectColumn(keyNumber-1);
+    });
+
     m_vtk.m_vtkStyle->connect(this,&MainWindow::KeyPressNumber,m_vtk.m_vtkStyle,&DesignInteractorStyle::slot_changeKeyPressNumber);
 
     connect(ui->tableWidget,&MyTableWidget::clickFilePath,this,&MainWindow::openStlFile);
 
+    //表格选择了变色框 并发送信号
+    connect(ui->colorTabel,&QTableWidget::cellClicked,this,[&](int row,int column)
+    {
+        Q_UNUSED(row);
+        emit KeyPressNumber(column + 1);
+    });
+
+    ui->colorTabel->selectColumn(0);
 }
 
 MainWindow::~MainWindow()
@@ -112,13 +124,4 @@ void MainWindow::on_outPut_btn_clicked()
 //    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setText("已保存");
 }
 
-void MainWindow::valueChange(int number)
-{
-    ui->spinBox->setValue(number);
-}
 
-
-void MainWindow::on_spinBox_valueChanged(int arg1)
-{
-    emit KeyPressNumber(arg1);
-}

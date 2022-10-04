@@ -33,10 +33,6 @@ private slots:
 
     void on_outPut_btn_clicked();
 
-    void valueChange(int number);
-    void on_spinBox_valueChanged(int arg1);
-
-
 private:
     Ui::MainWindow *ui;
     QString m_appPath;      //程序路径所在位置

@@ -12,12 +12,25 @@
 #include <vtkTriangleFilter.h>
 #include <vtkPoints.h>
 #include <vtkXMLPolyDataReader.h>
-#include <vtkPlyReader.h>
+#include <vtkPLYReader.h>
+#include <vtkIdFilter.h>
+#include <vtkCellCenters.h>
+#include <vtkBillboardTextActor3D.h>
+#include <vtkTextProperty.h>
+#include <vtkPolyDataMapper2D.h>
+#include <vtkActor2D.h>
+#include <vtkProperty2D.h>
+#include <vtkSelectVisiblePoints.h>
+#include <vtkLabeledDataMapper.h>
+#include <vtkDataArray.h>
+#include "UI/colortablewidget.h"
+#include <vtkDataArray.h>
 
 VtkShow::VtkShow(QWidget *parent)
     : QWidget{parent}
 {
 
+    iniColorTable();
 }
 
 /**************************************************************************************************
@@ -65,30 +78,46 @@ int VtkShow::showVtk(const QString stlFileName)
         vtkNew<vtkSTLReader> STLReader;
         STLReader->SetFileName(stlFileName.toLocal8Bit().data()); //修复中文路径无法打开文件的bug
         STLReader->Update();
-        triangle->SetInputConnection(STLReader->GetOutputPort());
+        polydata = STLReader->GetOutput();
 
+        //初始化标量（不初始化，会造成崩溃）
+        vtkNew<vtkFloatArray> cellData;
+        for (int i = 0; i < polydata->GetNumberOfCells(); i++)
+            cellData->InsertTuple1(i, 0);
+        polydata->GetCellData()->SetScalars(cellData);
     }
     else if(0 == stlFileName.right(4).compare(".vtp",Qt::CaseInsensitive))
     {
         vtkNew<vtkXMLPolyDataReader> vtpReader;
         vtpReader->SetFileName(stlFileName.toLocal8Bit().data());
+        vtkDataArray * dataArray = vtpReader->GetOutput()->GetCellData()->GetScalars("Label");
+
+        //将原有的颜色显示出来 （数据原始标量设置进去）
+        vtpReader->GetOutput()->GetCellData()->SetScalars(dataArray);
+        vtpReader->GetOutput()->BuildLinks();
         vtpReader->Update();
-        triangle->SetInputConnection(vtpReader->GetOutputPort());
+        polydata = vtpReader->GetOutput();
     }
     else if (0 == stlFileName.right(4).compare(".ply",Qt::CaseInsensitive))
     {
         vtkNew<vtkPLYReader> plyReader;
         plyReader->SetFileName(stlFileName.toLocal8Bit().data());
+        plyReader->GetOutput()->GetCellData()->SetNumberOfTuples(lut->GetNumberOfTableValues()+1);
+        plyReader->GetOutput()->BuildLinks();
         plyReader->Update();
-        triangle->SetInputConnection(plyReader->GetOutputPort());
+        polydata = plyReader->GetOutput();
+
+        //初始化标量（不初始化，会造成崩溃）
+        vtkNew<vtkFloatArray> cellData;
+        for (int i = 0; i < polydata->GetNumberOfCells(); i++)
+            cellData->InsertTuple1(i, 0);
+        polydata->GetCellData()->SetScalars(cellData);
     }
     else
     {
         return -1;
     }
 
-    triangle->Update();
-    polydata = triangle->GetOutput();
 
     vtkNew<vtkFeatureEdges> featureEdges;
     featureEdges->SetInputData(polydata);
@@ -104,6 +133,7 @@ int VtkShow::showVtk(const QString stlFileName)
 
     vtkNew<vtkPolyDataMapper> edgeMapper;
     edgeMapper->SetInputConnection(featureEdges->GetOutputPort());
+
     vtkNew<vtkActor> edgeActor;
     edgeActor->SetMapper(edgeMapper);
     edgeActor->GetProperty()->SetColor(vtkColor->GetColor3d("Red").GetData());
@@ -112,27 +142,16 @@ int VtkShow::showVtk(const QString stlFileName)
     edgeActor->PickableOff();
     m_renderer->AddActor(edgeActor);
 
-    lut->SetNumberOfTableValues(20);
-    lut->Build();
-    double white[4] = { 1.0,1.0,1.0,1.0 };
-    lut->SetTableValue(0, white);
-    vtkNew<vtkFloatArray> cellData;
-    for (int i = 0; i < polydata->GetNumberOfCells(); i++)
-        cellData->InsertTuple1(i, 0);
-    polydata->GetCellData()->SetScalars(cellData);
-    polydata->GetCellData()->GetScalars()->Print(std::cout);
-    polydata->BuildLinks();
-
     vtkNew<vtkPolyDataMapper> polydataMapper;
     polydataMapper->SetInputData(polydata);
-    polydataMapper->SetScalarRange(0, 19);
-    polydataMapper->SetLookupTable(lut);
+
+
+    polydataMapper->SetScalarRange(0,lut->GetNumberOfTableValues());  //设置颜色表范围
+    polydataMapper->SetLookupTable(lut);    //设置颜色表
     polydataMapper->Update();
 
     polydataActor->GetProperty()->EdgeVisibilityOff();
     polydataActor->SetMapper(polydataMapper);
-    polydataActor->GetProperty()->SetOpacity(1);
-//    polydataActor->GetProperty()->SetColor(lut->GetTableValue(20));
     m_renderer->AddActor(polydataActor);
 
     m_renderer->SetBackground(vtkColor->GetColor3d("AliceBlue").GetData());
@@ -144,13 +163,13 @@ int VtkShow::showVtk(const QString stlFileName)
     m_vtkStyle->setRenderer(m_renderer);
     m_vtkStyle->setPolyData(polydata);
     m_vtkStyle->setPolyDataActor(polydataActor);
+    m_vtkStyle->setLut(lut);
 
     vtkInter->SetInteractorStyle(m_vtkStyle);
     vtkInter->SetRenderWindow(m_renderWindow);
 
     m_renderer->ResetCamera();
     m_renderWindow->Render();
-
 
     return 0;
 }
@@ -172,5 +191,29 @@ bool VtkShow::saveVtP(QString vtpFileName)
     writer->SetInputData(polydata);
     writer->SetFileName(vtpFileName.toLocal8Bit().data());
     return writer->Write();
+}
+
+/**************************************************************************************************
+ *函数名：iniColorTable
+ *时间：   2022-10-05 00:13:13
+ *用户：   李旺
+ *参数：  无
+ *返回值：无
+ *描述： 初始化颜色表
+*************************************************************************************************/
+void VtkShow::iniColorTable()
+{
+    lut->SetNumberOfTableValues(labelColorList.count()+1);
+    double Background[4] = {255/255.0, 162/255.0, 143/255.0,1.0};
+    lut->SetTableValue(0, Background);
+
+    int i = 1;
+    for(const auto &color : labelColorList)
+    {
+        int r,g,b;
+        color.getRgb(&r,&g,&b);
+        lut->SetTableValue(static_cast<vtkIdType>(i),r/255.0,g/255.0,b/255.0);
+        i++;
+    }
 }
 
