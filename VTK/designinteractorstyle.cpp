@@ -21,15 +21,16 @@
 #include <vtkLabeledDataMapper.h>
 #include <vtkNamedColors.h>
 #include <set>
+#include <vtkImageCanvasSource2D.h>
+#include <vtkImageActor.h>
+#include <vtkImageMapper3D.h>
+#include <array>
+#include <vtkSelectEnclosedPoints.h>
 
-int bfsCount = 0;
 DesignInteractorStyle::DesignInteractorStyle(QObject *parent)
     : QObject{parent}
 {
-//    m_lut->SetNumberOfTableValues(20);
-//    m_lut->Build();
-//    double white[4] = { 1.0,1.0,1.0,1.0 };
-//    m_lut->SetTableValue(0, white);
+    connect(this,&DesignInteractorStyle::sig_keyPressNumber,this,&DesignInteractorStyle::slot_changeKeyPressNumber);
 }
 
 void DesignInteractorStyle::OnLeftButtonDown()
@@ -95,6 +96,7 @@ void DesignInteractorStyle::OnMiddleButtonUp()
 
 void DesignInteractorStyle::OnMouseMove()
 {
+//    cell2DShow();
     //showCellID();
     //当右键点击时，采用鼠标左键默认的旋转方式。
     //当中键点击时，采用鼠标中键默认的移动方式
@@ -142,16 +144,9 @@ void DesignInteractorStyle::OnMouseMove()
 
     if (SelectMode::MultipleSelect == triangleSelectMode)
     {
-        QElapsedTimer time;
-        time.start();
-        bfsCount = 0;
-//        qDebug()<<"position: "<<position[0]<<position[1]<<position[2];
+        m_visit.clear();
+        m_visit.resize(m_polyData->GetNumberOfCells(),false);
         BFS(position, TriID);
-        auto elapsed = time.nsecsElapsed();
-//        qDebug()<<"BFS耗时us："<<elapsed<<"  BFS 耗时ms： "<<time.elapsed() << "  TirID: "<<TriID;
-
-//        qDebug()<<"bfsCount: " << bfsCount;
-
 
         m_polyData->GetCellData()->Modified();
         m_polyData->GetCellData()->GetScalars()->Modified();
@@ -369,7 +364,7 @@ void DesignInteractorStyle::setRenderer(vtkRenderer *newRenderer)
 /**************************************************************************************************
  *函数名： getOBBTreeIntersectWithLine
  *时间：   2022-09-25 01:34:41
- *用户：   李旺
+ *用户：
  *参数：   vtkPolyData *m_polyData, 与之相交的对象
  *        vtkPoints *intersecPoints    与polydata 相交点集合
  *        vtkIdList *intersecCells     与cell相交的集合
@@ -394,10 +389,7 @@ bool DesignInteractorStyle::getOBBTreeIntersectWithLine(vtkPolyData *m_polyData,
         endPos[i] = pViewDir[i] * 1000 + worldPos[i];
     }
 
-    vtkNew<vtkOBBTree> obbTree;
-    obbTree->SetDataSet(m_polyData);
-//    obbTree->SetMaxLevel(50);
-    obbTree->BuildLocator();
+
 
     int iRet = obbTree->IntersectWithLine(worldPos,endPos,intersecPoints,intersecCells);
 
@@ -410,17 +402,12 @@ bool DesignInteractorStyle::getOBBTreeIntersectWithLine(vtkPolyData *m_polyData,
 
 void DesignInteractorStyle::BFS(const double *Position, const int TriID)
 {
-    bfsCount++;
-    if (!CellInSphere(Position,TriID))
+    if (!CellInSphere(Position,TriID) || m_visit[TriID])
     {
         return;
     }
 
-    if (bfsCount != 1 && static_cast<int>(m_polyData->GetCellData()->GetScalars()
-                                          ->GetTuple1(TriID)) == m_keyPressNumber)
-    {
-        return;
-    }
+    m_visit[TriID] = true;
 
     m_polyData->GetCellData()->GetScalars()->SetTuple1(TriID, m_keyPressNumber);
 
@@ -582,6 +569,55 @@ void DesignInteractorStyle::showCellID()
     m_renderer->AddActor2D(pointLabels);
 }
 
+
+void DesignInteractorStyle::cell2DShow()
+{
+    vtkNew<vtkNamedColors> colors;
+
+//    qDebug() <<"0000000000000";
+    std::array<double, 3> drawColor1{0, 0, 0};
+    std::array<double, 3> drawColor2{0, 0, 0};
+    auto color1 = colors->GetColor3ub("SlateGray").GetData();
+    auto color2 = colors->GetColor3ub("Tomato").GetData();
+    for (auto i = 0; i < 3; ++i)
+    {
+      drawColor1[i] = color1[i];
+      drawColor2[i] = color2[i];
+    }
+
+    vtkNew<vtkImageCanvasSource2D> imageSource;
+    imageSource->SetScalarTypeToUnsignedChar();
+    imageSource->SetNumberOfScalarComponents(3);
+    imageSource->SetExtent(0, 20, 0, 50, 0, 0);
+    imageSource->SetDrawColor(drawColor1.data());
+    imageSource->FillBox(0, 20, 0, 50);
+    imageSource->SetDrawColor(drawColor2.data());
+    imageSource->FillBox(0, 10, 0, 30);
+    imageSource->Update();
+
+    vtkNew<vtkImageActor> actor;
+    actor->GetMapper()->SetInputConnection(imageSource->GetOutputPort());
+
+    m_renderer->AddActor(actor);
+}
+
+//
+void DesignInteractorStyle::selectEnclosePoints()
+{
+    vtkNew<vtkSphereSource>  sphere;
+//    sphere->SetCenter(position);
+    sphere->SetRadius(MouseSphereRadius);
+    sphere->SetPhiResolution(36);
+    sphere->SetThetaResolution(36);
+    sphere->Update();
+
+    vtkNew<vtkSelectEnclosedPoints> select;
+    select->SetInputData(m_polyData);
+    select->SetSurfaceData(sphere->GetOutput());
+
+}
+
+
 void DesignInteractorStyle::setLut(vtkLookupTable *newLut)
 {
     m_lut = newLut;
@@ -590,6 +626,10 @@ void DesignInteractorStyle::setLut(vtkLookupTable *newLut)
 void DesignInteractorStyle::setPolyDataActor(vtkActor *newPolyDataActor)
 {
     m_polyDataActor = newPolyDataActor;
+    obbTree = vtkSmartPointer<vtkOBBTree>::New();
+    obbTree->SetDataSet(m_polyData);
+//    obbTree->SetMaxLevel(50);
+    obbTree->BuildLocator();
 }
 
 void DesignInteractorStyle::slot_changeKeyPressNumber(int number)
@@ -598,6 +638,5 @@ void DesignInteractorStyle::slot_changeKeyPressNumber(int number)
     m_sphereActor->GetProperty()->SetColor(m_lut->GetTableValue(m_keyPressNumber));
     m_sphereActor->GetProperty()->SetOpacity(1);
     this->Interactor->Render();
-    qDebug()<<"slot_changeKeyPressNumber: "<<m_keyPressNumber;
 }
 

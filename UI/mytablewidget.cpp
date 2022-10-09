@@ -16,10 +16,14 @@ MyTableWidget::MyTableWidget(QWidget *parent)
     this->setAcceptDrops(true); //开启拖拽事件开关
     this->setEditTriggers(QAbstractItemView::NoEditTriggers); //不允许编辑
     this->setSelectionBehavior(QAbstractItemView::SelectRows); //选整行
+
+    //自动调整间距
     this->horizontalHeader()->setStretchLastSection(true);
+    this->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+
     this->setHorizontalHeaderLabels({"文件名称","保存状态"});
 //    this->setAlternatingRowColors(true);  //隔行变色
-
+    currentTableIndex = 0;
     connect(this,&MyTableWidget::cellDoubleClicked,this,
             [&](int row,int column)
     {
@@ -53,8 +57,8 @@ void MyTableWidget::addStlFileToTable(const QStringList &fileList)
         this->setItem(0, 0, new QTableWidgetItem(fileName));
         this->setItem(0, 1, new QTableWidgetItem(""));
         m_fileList.append(filePath);
-
     }
+
 }
 
 /**************************************************************************************************
@@ -94,14 +98,21 @@ void MyTableWidget::dropEvent(QDropEvent *event)
     for(const auto &url : event->mimeData()->urls())
     {
         const auto &fileName = url.toLocalFile();
-        if (0 == fileName.right(4).compare(".stl",Qt::CaseInsensitive))
+        if (0 == fileName.right(4).compare(".stl",Qt::CaseInsensitive)
+                || 0 == fileName.right(4).compare(".vtp",Qt::CaseInsensitive)
+                || 0 == fileName.right(4).compare(".ply",Qt::CaseInsensitive))
         {
             fileList.append(fileName);
         }
     }
-    if (!fileList.isEmpty())
+    if (fileList.isEmpty())
     {
-        //将文件序列添加到表格中
-        addStlFileToTable(fileList);
+        return;
     }
+
+    //将文件序列添加到表格中
+    addStlFileToTable(fileList);
+
+    this->cellDoubleClicked(0,0);
+
 }

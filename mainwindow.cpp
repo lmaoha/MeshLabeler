@@ -18,12 +18,11 @@ MainWindow::MainWindow(QWidget *parent)
     m_config = new QSettings(m_appPath + "/config.ini",QSettings::IniFormat,this);
     m_config->setIniCodec(QTextCodec::codecForName("UTF-8"));
 
-    loadConfig();
 
     m_vtk.setWidget(ui->qvtkWidget);
-    m_vtk.showVtk(m_inputFileName);
+//    m_vtk.showVtk(m_inputFileName);
 
-    ui->fileName_label->setText(m_inputFileName);
+//    ui->fileName_label->setText(m_inputFileName);
 
     m_vtk.m_vtkStyle->connect(m_vtk.m_vtkStyle,&DesignInteractorStyle::sig_keyPressNumber,this
                               ,[&](int keyNumber)
@@ -33,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_vtk.m_vtkStyle->connect(this,&MainWindow::KeyPressNumber,m_vtk.m_vtkStyle,&DesignInteractorStyle::slot_changeKeyPressNumber);
 
-    connect(ui->tableWidget,&MyTableWidget::clickFilePath,this,&MainWindow::openStlFile);
+    connect(ui->tableWidget,&MyTableWidget::clickFilePath,this,&MainWindow::openFile);
 
     //表格选择了变色框 并发送信号
     connect(ui->colorTabel,&QTableWidget::cellClicked,this,[&](int row,int column)
@@ -43,6 +42,14 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     ui->colorTabel->selectColumn(0);
+
+    //改变简化三角形数值后立即保存至VTK内，下次打开文件后作用
+    connect(ui->reductionCount_lineEdit,&QLineEdit::textChanged, this, [&](QString str)
+    {
+        m_vtk.setReductionCount(str.toInt());
+    });
+
+    ui->reductionCount_lineEdit->setValidator(new QRegExpValidator(QRegExp("^[0-9]*[1-9][0-9]*$"), this));
 }
 
 MainWindow::~MainWindow()
@@ -58,6 +65,17 @@ void MainWindow::loadConfig()
     m_inputFileName  = m_config->value("INPUT_FILE_NAME").toString();
     m_outputFileName = m_config->value("OUTPUT_FILE_NAME").toString();
     m_lastOpenPath   = m_config->value("LAST_OPEN_PATH").toString();
+
+    bool ok;
+    m_reductionCount = m_config->value("REDUCTION_COUNT").toInt(&ok);
+    if (!ok)
+    {
+        m_reductionCount = 21000;
+        qDebug()<<"读取 REDUCTION_COUNT 数据失败，修改为默认参数21000";
+    }
+    ui->reductionCount_lineEdit->setText(QString::number(m_reductionCount));
+    m_vtk.setReductionCount(m_reductionCount);
+
     m_config->endGroup();
 }
 
@@ -68,45 +86,64 @@ void MainWindow::saveConfig()
     m_config->setValue("INPUT_FILE_NAME", m_inputFileName);
     m_config->setValue("OUTPUT_FILE_NAME", m_outputFileName);
     m_config->setValue("LAST_OPEN_PATH", m_lastOpenPath);
+    m_config->setValue("REDUCTION_COUNT", m_reductionCount);
 
     m_config->endGroup();
 
 }
 
-void MainWindow::openStlFile(QString stlFilePath)
+void MainWindow::openFile(QString filePath)
 {
-    m_inputFileName = stlFilePath;
-    m_lastOpenPath = stlFilePath;
+    m_inputFileName = filePath;
+    m_lastOpenPath = filePath;
     ui->fileName_label->setText(m_inputFileName);
     m_vtk.showVtk(m_inputFileName);
     saveConfig();
 }
 
-
 void MainWindow::on_inputFile_btn_clicked()
 {
+    loadConfig();
+
     QStringList fileList = QFileDialog::getOpenFileNames(this,
                                                 tr("文件对话框！"),
                                                 m_lastOpenPath,
+                                                "File(*.vtp *.stl *.ply);;"
                                                 "VTP File(*.vtp);;"
                                                 "STL File(*.stl);;"
                                                 "PLY File(*.ply)");
     if (fileList.isEmpty())
     {
+        m_inputFileName.clear();
         return;
     }
-    m_inputFileName = fileList.at(0);
-    m_lastOpenPath = fileList.at(0);
-    ui->fileName_label->setText(m_inputFileName);
-    m_vtk.showVtk(m_inputFileName);
-    saveConfig();
 
     ui->tableWidget->addStlFileToTable(fileList);
+
+    m_inputFileName =  ui->tableWidget->item(0,0)->text();
+    m_lastOpenPath = m_inputFileName;
+//    ui->tableWidget->currentTableIndex = 0;
+    ui->fileName_label->setText(m_inputFileName);
+    ui->tableWidget->cellDoubleClicked(0,0);
+
+    saveConfig();
+
 }
 
 void MainWindow::on_outPut_btn_clicked()
 {
+    if (m_inputFileName.isEmpty())
+    {
+        return;
+    }
     QString fileName;
+    if (0 == m_lastOpenPath.right(4).compare(".ply",Qt::CaseInsensitive)
+            || 0 == m_lastOpenPath.right(4).compare(".vtp",Qt::CaseInsensitive)
+            || 0 == m_lastOpenPath.right(4).compare(".stl",Qt::CaseInsensitive))
+    {
+        m_lastOpenPath = m_lastOpenPath.left(m_lastOpenPath.count() - 4);
+    }
+
     fileName = QFileDialog::getSaveFileName(this,
                                                 tr("文件对话框！"),
                                                 m_lastOpenPath,
@@ -120,8 +157,8 @@ void MainWindow::on_outPut_btn_clicked()
     m_vtk.saveVtP(m_outputFileName);
     saveConfig();
 
-//    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setBackground(QBrush(Qt::green));
-//    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setText("已保存");
+    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setBackground(QBrush(Qt::green));
+    ui->tableWidget->item(ui->tableWidget->currentTableIndex,1)->setText("已保存");
 }
 
 

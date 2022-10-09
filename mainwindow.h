@@ -23,7 +23,7 @@ public:
     void loadConfig();
     void saveConfig();
 
-    void openStlFile(QString stlFilePath);
+    void openFile(QString filePath);
 
 signals:
     void KeyPressNumber(int number);
@@ -42,6 +42,8 @@ private:
     VtkShow m_vtk;
     QString m_inputFileName;
     QString m_outputFileName;
+
+    int m_reductionCount;   //简化三角形的个数
 
 };
 #endif // MAINWINDOW_H

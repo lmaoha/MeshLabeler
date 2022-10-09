@@ -13,8 +13,7 @@ ColorTableWidget::ColorTableWidget(QWidget *parent)
 void ColorTableWidget::initColorTable()
 {
     this->setRowCount(2);
-//    this->horizontalScrollBar()->hide();
-//    this->verticalScrollBar()->hide();
+
     this->setEditTriggers(QAbstractItemView::NoEditTriggers);     //不允许编辑
     this->setSelectionMode(QAbstractItemView::SingleSelection);   //仅能单个选择
     this->setSelectionBehavior(QAbstractItemView::SelectColumns); //选整列

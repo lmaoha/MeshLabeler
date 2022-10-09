@@ -11,6 +11,7 @@
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkLookupTable.h>
 #include <vtkLookupTable.h>
+#include <vtkOBBTree.h>
 #include <vtkRenderWindow.h>
 
 class DesignInteractorStyle : public QObject , public vtkInteractorStyleTrackballCamera
@@ -67,11 +68,15 @@ private:
     //cell包含在球内
     bool CellInSphere(const double *Position, int TriID);
 
+    //以下是测试程序还未用到
     void showCellID();
+    void cell2DShow();
+    void selectEnclosePoints();
 
 private:
     vtkNew<vtkActor> m_sphereActor;   //球actor
     vtkLookupTable *m_lut;     //色卡
+    vtkSmartPointer<vtkOBBTree> obbTree;
 
     vtkNew<vtkActor2D> cellLabels;
     vtkNew<vtkActor2D> rectActor;
@@ -88,6 +93,7 @@ private:
     int m_keyPressNumber = 1;     //按下的数字键
     int m_lastKeyPressNumber = 0;  //上一个按下的数字键(在按下shift键后保存，用于恢复)
     double MouseSphereRadius = 2.5;  //原始2.5
+    std::vector<bool> m_visit;   // 标记已经被选择过的三角面
 
     enum SelectMode
     {
@@ -95,13 +101,6 @@ private:
         SingleSelect = 1     //单个选择 选择一个三角面片
     };
     SelectMode triangleSelectMode = MultipleSelect;
-
-
-
-
-
-
-
 };
 
 #endif // DESIGNINTERACTORSTYLE_H

@@ -25,13 +25,15 @@
 #include <vtkDataArray.h>
 #include <QFileInfo>
 #include "UI/colortablewidget.h"
+#include <QMessageBox>
 #include <vtkDataArray.h>
+#include <vtkDecimatePro.h>
 
 VtkShow::VtkShow(QWidget *parent)
     : QWidget{parent}
 {
-
     iniColorTable();
+    m_reductionCount = 21000;
 }
 
 /**************************************************************************************************
@@ -47,7 +49,9 @@ void VtkShow::setWidget(QVTKWidget *vtkWidget)
     m_vtkWidget = vtkWidget;
     m_renderer = vtkSmartPointer<vtkRenderer>::New();
     m_renderer->SetBackground(m_colors->GetColor3d("SkyBlue").GetData());
-    m_renderer->GetActiveCamera()->SetParallelProjection(1); //关键一步 平行投影
+
+    //关键一步 设置平行投影 OBBTree 才可以起作用
+    m_renderer->GetActiveCamera()->SetParallelProjection(1);
 
     m_renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
     m_renderWindow->AddRenderer(m_renderer);
@@ -55,6 +59,18 @@ void VtkShow::setWidget(QVTKWidget *vtkWidget)
 
     m_vtkWidget->SetRenderWindow(m_renderWindow);
 
+    //特征边缘
+    m_featureEdges = vtkSmartPointer<vtkFeatureEdges>::New();
+
+}
+
+void VtkShow::setReductionCount(int reductionCount)
+{
+    if (0 == m_reductionCount)
+    {
+        m_reductionCount = 21000;
+    }
+    m_reductionCount = reductionCount;
 }
 
 /**************************************************************************************************
@@ -75,64 +91,41 @@ int VtkShow::showVtk(const QString stlFileName)
     m_renderer->RemoveAllViewProps();
     if (0 == stlFileName.right(4).compare(".stl",Qt::CaseInsensitive))
     {
-        vtkNew<vtkSTLReader> STLReader;
-        STLReader->SetFileName(stlFileName.toLocal8Bit().data()); //修复中文路径无法打开文件的bug
-        STLReader->Update();
-        polydata = STLReader->GetOutput();
-
-        //初始化标量（不初始化，会造成崩溃）
-        vtkNew<vtkFloatArray> cellData;
-        for (int i = 0; i < polydata->GetNumberOfCells(); i++)
-            cellData->InsertTuple1(i, 0);
-        polydata->GetCellData()->SetScalars(cellData);
+        openSTLFile(stlFileName);
     }
     else if(0 == stlFileName.right(4).compare(".vtp",Qt::CaseInsensitive))
     {
-        vtkNew<vtkXMLPolyDataReader> vtpReader;
-        vtpReader->SetFileName(stlFileName.toLocal8Bit().data());
-        vtkDataArray * dataArray = vtpReader->GetOutput()->GetCellData()->GetScalars("Label");
-
-        //将原有的颜色显示出来 （数据原始标量设置进去）
-        vtpReader->GetOutput()->GetCellData()->SetScalars(dataArray);
-        vtpReader->GetOutput()->BuildLinks();
-        vtpReader->Update();
-        polydata = vtpReader->GetOutput();
+        openVTPfile(stlFileName);
     }
     else if (0 == stlFileName.right(4).compare(".ply",Qt::CaseInsensitive))
     {
-        vtkNew<vtkPLYReader> plyReader;
-        plyReader->SetFileName(stlFileName.toLocal8Bit().data());
-        plyReader->GetOutput()->GetCellData()->SetNumberOfTuples(lut->GetNumberOfTableValues()+1);
-        plyReader->GetOutput()->BuildLinks();
-        plyReader->Update();
-        polydata = plyReader->GetOutput();
-
-        //初始化标量（不初始化，会造成崩溃）
-        vtkNew<vtkFloatArray> cellData;
-        for (int i = 0; i < polydata->GetNumberOfCells(); i++)
-            cellData->InsertTuple1(i, 0);
-        polydata->GetCellData()->SetScalars(cellData);
+        openPLYFile(stlFileName);
     }
     else
     {
         return -1;
     }
 
+    if (0 == m_polyData->GetNumberOfCells())
+    {
+        qDebug()<<"文件无效";
+        QMessageBox::warning(this,"读取文件","读取文件错误","确定");
+        return -1;
+    }
 
-    vtkNew<vtkFeatureEdges> featureEdges;
-    featureEdges->SetInputData(polydata);
-    featureEdges->BoundaryEdgesOff();
-    featureEdges->FeatureEdgesOn();
-    featureEdges->SetFeatureAngle(20);
-    featureEdges->ManifoldEdgesOff();
-    featureEdges->NonManifoldEdgesOff();
-    featureEdges->ColoringOff();
-    featureEdges->Update();
+    //显示特征边缘操作
+    m_featureEdges->BoundaryEdgesOff();
+    m_featureEdges->FeatureEdgesOn();
+    m_featureEdges->SetFeatureAngle(20);
+    m_featureEdges->ManifoldEdgesOff();
+    m_featureEdges->NonManifoldEdgesOff();
+    m_featureEdges->ColoringOff();
+    m_featureEdges->Update();
 
     vtkNew<vtkNamedColors> vtkColor;
 
     vtkNew<vtkPolyDataMapper> edgeMapper;
-    edgeMapper->SetInputConnection(featureEdges->GetOutputPort());
+    edgeMapper->SetInputConnection(m_featureEdges->GetOutputPort());
 
     vtkNew<vtkActor> edgeActor;
     edgeActor->SetMapper(edgeMapper);
@@ -143,7 +136,7 @@ int VtkShow::showVtk(const QString stlFileName)
     m_renderer->AddActor(edgeActor);
 
     vtkNew<vtkPolyDataMapper> polydataMapper;
-    polydataMapper->SetInputData(polydata);
+    polydataMapper->SetInputData(m_polyData);
 
 
     polydataMapper->SetScalarRange(0,lut->GetNumberOfTableValues());  //设置颜色表范围
@@ -158,10 +151,9 @@ int VtkShow::showVtk(const QString stlFileName)
 
     m_renderWindow->AddRenderer(m_renderer);
 
-    m_renderWindow->Render();
     vtkNew<vtkRenderWindowInteractor> vtkInter;
     m_vtkStyle->setRenderer(m_renderer);
-    m_vtkStyle->setPolyData(polydata);
+    m_vtkStyle->setPolyData(m_polyData);
     m_vtkStyle->setPolyDataActor(polydataActor);
     m_vtkStyle->setLut(lut);
 
@@ -185,12 +177,54 @@ int VtkShow::showVtk(const QString stlFileName)
 bool VtkShow::saveVtP(QString vtpFileName)
 {
     //导出文件
-    polydata->GetCellData()->GetScalars()->SetName("Label");
-    polydata->GetCellData()->GetScalars()->Modified();
+    m_polyData->GetCellData()->GetScalars()->SetName("Label");
+    m_polyData->GetCellData()->GetScalars()->Modified();
     vtkNew<vtkXMLPolyDataWriter> writer;
-    writer->SetInputData(polydata);
+    writer->SetInputData(m_polyData);
     writer->SetFileName(vtpFileName.toLocal8Bit().data());
     return writer->Write();
+}
+
+void VtkShow::openSTLFile(QString fileName)
+{
+    vtkNew<vtkSTLReader> STLReader;
+    STLReader->SetFileName(fileName.toLocal8Bit().data()); //修复中文路径无法打开文件的bug
+    STLReader->Update();
+    m_polyData = STLReader->GetOutput();
+
+    m_featureEdges->SetInputData(m_polyData);
+
+    decimatePro(m_reductionCount);
+    iniScalars();
+}
+
+void VtkShow::openPLYFile(QString fileName)
+{
+    vtkNew<vtkPLYReader> plyReader;
+    plyReader->SetFileName(fileName.toLocal8Bit().data());
+    plyReader->GetOutput()->GetCellData()->SetNumberOfTuples(lut->GetNumberOfTableValues()+1);
+    plyReader->GetOutput()->BuildLinks();
+    plyReader->Update();
+    m_polyData = plyReader->GetOutput();
+    m_featureEdges->SetInputData(m_polyData);
+
+    decimatePro(m_reductionCount);
+    iniScalars();
+}
+
+void VtkShow::openVTPfile(QString fileName)
+{
+    vtkNew<vtkXMLPolyDataReader> vtpReader;
+    vtpReader->SetFileName(fileName.toLocal8Bit().data());
+    vtkDataArray * dataArray = vtpReader->GetOutput()->GetCellData()->GetScalars("Label");
+
+    //将原有的颜色显示出来 （数据原始标量设置进去）
+    vtpReader->GetOutput()->GetCellData()->SetScalars(dataArray);
+    vtpReader->GetOutput()->BuildLinks();
+    vtpReader->Update();
+    m_polyData = vtpReader->GetOutput();
+    m_featureEdges->SetInputData(m_polyData);
+
 }
 
 /**************************************************************************************************
@@ -215,5 +249,43 @@ void VtkShow::iniColorTable()
         lut->SetTableValue(static_cast<vtkIdType>(i),r/255.0,g/255.0,b/255.0);
         i++;
     }
+}
+
+/**************************************************************************************************
+ *函数名： decimatePro
+ *时间：   2022-10-09 19:37:49
+ *用户：
+ *参数：  const int &triangleCount 最终简化的三角形个数
+ *返回值：无
+ *描述： 简化三角形
+*************************************************************************************************/
+void VtkShow::decimatePro(const int &triangleCount)
+{
+    //简化三角面
+    double target = 1.0 - (static_cast<double>(triangleCount) / m_polyData->GetNumberOfCells());
+    vtkNew<vtkDecimatePro> deci;
+    deci->SetInputData(m_polyData);
+    deci->SetTargetReduction(target);
+    deci->Update();
+    m_polyData = deci->GetOutput();
+
+
+}
+
+/**************************************************************************************************
+ *函数名： iniScalars
+ *时间：   2022-10-09 19:45:26
+ *用户：   李旺
+ *参数：   无
+ *返回值： 无
+ *描述：    初始化标量数据
+*************************************************************************************************/
+void VtkShow::iniScalars()
+{
+    //初始化标量（不初始化，会造成崩溃）
+    vtkNew<vtkFloatArray> cellData;
+    for (int i = 0; i < m_polyData->GetNumberOfCells(); i++)
+        cellData->InsertTuple1(i, 0);
+    m_polyData->GetCellData()->SetScalars(cellData);
 }
 

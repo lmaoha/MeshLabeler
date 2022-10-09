@@ -9,6 +9,7 @@
 #include <QWidget>
 #include <QString>
 #include <QDebug>
+#include <vtkFeatureEdges.h>
 
 
 //vtk
@@ -46,27 +47,42 @@ public:
     explicit VtkShow(QWidget *parent = nullptr);
     void setWidget(QVTKWidget *vtkWidget);
 
+    //设置简化三角形个数
+    void setReductionCount(int reductionCount);
+
+    //显示VTK主窗口
     int showVtk(const QString stlFileName);
 
     bool saveVtP(QString vtpFileName);
 
-    vtkSmartPointer<vtkRenderWindow> m_renderWindow;
     vtkNew<DesignInteractorStyle> m_vtkStyle;
 
 private:
 
+    void openSTLFile(QString fileName);
+    void openPLYFile(QString fileName);
+    void openVTPfile(QString fileName);
+
     void iniColorTable();
+
+    //简化三角形
+    void decimatePro(const int &triangleCount);
+
+    //初始化标量
+    void iniScalars();
 signals:
 
 private:
     QVTKWidget *m_vtkWidget;
     vtkNew<vtkNamedColors> m_colors;
+    vtkSmartPointer<vtkRenderWindow> m_renderWindow;
     vtkSmartPointer<vtkRenderer> m_renderer;
     vtkNew<vtkActor> polydataActor;          //载入模型actor
-    vtkSmartPointer<vtkPolyData> polydata;   //载入模型的polyData
+    vtkSmartPointer<vtkPolyData> m_polyData;   //载入模型的polyData
+    vtkSmartPointer<vtkFeatureEdges> m_featureEdges;    //特征边缘
     vtkNew<vtkLookupTable> lut;
-//    vtkNew<DesignInteractorStyle> m_style;
 
+    int m_reductionCount;   //简化三角形个数
 public:
 
 
