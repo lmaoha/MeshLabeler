@@ -18,11 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_config = new QSettings(m_appPath + "/config.ini",QSettings::IniFormat,this);
     m_config->setIniCodec(QTextCodec::codecForName("UTF-8"));
 
-
     m_vtk.setWidget(ui->qvtkWidget);
-//    m_vtk.showVtk(m_inputFileName);
-
-//    ui->fileName_label->setText(m_inputFileName);
 
     m_vtk.m_vtkStyle->connect(m_vtk.m_vtkStyle,&DesignInteractorStyle::sig_keyPressNumber,this
                               ,[&](int keyNumber)
@@ -108,10 +104,11 @@ void MainWindow::on_inputFile_btn_clicked()
     QStringList fileList = QFileDialog::getOpenFileNames(this,
                                                 tr("文件对话框！"),
                                                 m_lastOpenPath,
-                                                "File(*.vtp *.stl *.ply);;"
+                                                "File(*.vtp *.stl *.ply *.obj);;"
                                                 "VTP File(*.vtp);;"
                                                 "STL File(*.stl);;"
-                                                "PLY File(*.ply)");
+                                                "PLY File(*.ply);;"
+                                                "OBJ File(*.obj)");
     if (fileList.isEmpty())
     {
         m_inputFileName.clear();
@@ -138,8 +135,9 @@ void MainWindow::on_outPut_btn_clicked()
     }
     QString fileName;
     if (0 == m_lastOpenPath.right(4).compare(".ply",Qt::CaseInsensitive)
-            || 0 == m_lastOpenPath.right(4).compare(".vtp",Qt::CaseInsensitive)
-            || 0 == m_lastOpenPath.right(4).compare(".stl",Qt::CaseInsensitive))
+     || 0 == m_lastOpenPath.right(4).compare(".vtp",Qt::CaseInsensitive)
+     || 0 == m_lastOpenPath.right(4).compare(".stl",Qt::CaseInsensitive)
+     || 0 == m_lastOpenPath.right(4).compare(".obj",Qt::CaseInsensitive))
     {
         m_lastOpenPath = m_lastOpenPath.left(m_lastOpenPath.count() - 4);
     }

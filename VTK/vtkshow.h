@@ -61,7 +61,8 @@ private:
 
     void openSTLFile(QString fileName);
     void openPLYFile(QString fileName);
-    void openVTPfile(QString fileName);
+    void openVTPFile(QString fileName);
+    void openOBJFile(QString fileName);
 
     void iniColorTable();
 

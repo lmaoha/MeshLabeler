@@ -28,6 +28,7 @@
 #include <QMessageBox>
 #include <vtkDataArray.h>
 #include <vtkDecimatePro.h>
+#include <vtkOBJReader.h>
 
 VtkShow::VtkShow(QWidget *parent)
     : QWidget{parent}
@@ -77,29 +78,33 @@ void VtkShow::setReductionCount(int reductionCount)
  *函数名：showVtk
  *时间：   2022-09-12 21:24:49
  *用户：
- *参数：   const QString stlFileName 打开文件名
+ *参数：   const QString fileName 打开文件名
  *返回值： 正常0 错误非0
  *描述：显示Vtk 模型主程序
 *************************************************************************************************/
-int VtkShow::showVtk(const QString stlFileName)
+int VtkShow::showVtk(const QString fileName)
 {
-    if (stlFileName.isEmpty() || !QFileInfo(stlFileName).isFile())
+    if (fileName.isEmpty() || !QFileInfo(fileName).isFile())
     {
         return -1;
     }
 
     m_renderer->RemoveAllViewProps();
-    if (0 == stlFileName.right(4).compare(".stl",Qt::CaseInsensitive))
+    if (0 == fileName.right(4).compare(".stl",Qt::CaseInsensitive))
     {
-        openSTLFile(stlFileName);
+        openSTLFile(fileName);
     }
-    else if(0 == stlFileName.right(4).compare(".vtp",Qt::CaseInsensitive))
+    else if(0 == fileName.right(4).compare(".vtp",Qt::CaseInsensitive))
     {
-        openVTPfile(stlFileName);
+        openVTPFile(fileName);
     }
-    else if (0 == stlFileName.right(4).compare(".ply",Qt::CaseInsensitive))
+    else if (0 == fileName.right(4).compare(".ply",Qt::CaseInsensitive))
     {
-        openPLYFile(stlFileName);
+        openPLYFile(fileName);
+    }
+    else if (0 == fileName.right(4).compare(".obj",Qt::CaseInsensitive))
+    {
+        openOBJFile(fileName);
     }
     else
     {
@@ -212,7 +217,7 @@ void VtkShow::openPLYFile(QString fileName)
     iniScalars();
 }
 
-void VtkShow::openVTPfile(QString fileName)
+void VtkShow::openVTPFile(QString fileName)
 {
     vtkNew<vtkXMLPolyDataReader> vtpReader;
     vtpReader->SetFileName(fileName.toLocal8Bit().data());
@@ -225,6 +230,20 @@ void VtkShow::openVTPfile(QString fileName)
     m_polyData = vtpReader->GetOutput();
     m_featureEdges->SetInputData(m_polyData);
 
+}
+
+void VtkShow::openOBJFile(QString fileName)
+{
+    vtkNew<vtkOBJReader> objReader;
+    objReader->SetFileName(fileName.toLocal8Bit().data());
+    objReader->GetOutput()->GetCellData()->SetNumberOfTuples(lut->GetNumberOfTableValues()+1);
+    objReader->GetOutput()->BuildLinks();
+    objReader->Update();
+    m_polyData = objReader->GetOutput();
+    m_featureEdges->SetInputData(m_polyData);
+
+    decimatePro(m_reductionCount);
+    iniScalars();
 }
 
 /**************************************************************************************************
