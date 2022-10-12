@@ -38,11 +38,13 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     ui->colorTabel->selectColumn(0);
-
+    loadConfig();
     //改变简化三角形数值后立即保存至VTK内，下次打开文件后作用
-    connect(ui->reductionCount_lineEdit,&QLineEdit::textChanged, this, [&](QString str)
+    connect(ui->reductionCount_lineEdit,&QLineEdit::editingFinished, this, [&]()
     {
-        m_vtk.setReductionCount(str.toInt());
+        m_reductionCount = ui->reductionCount_lineEdit->text().toInt();
+        m_vtk.setReductionCount(m_reductionCount);
+        saveConfig();
     });
 
     ui->reductionCount_lineEdit->setValidator(new QRegExpValidator(QRegExp("^[0-9]*[1-9][0-9]*$"), this));
