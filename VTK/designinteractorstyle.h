@@ -14,6 +14,7 @@
 #include <vtkOBBTree.h>
 #include <vtkRenderWindow.h>
 
+
 class DesignInteractorStyle : public QObject , public vtkInteractorStyleTrackballCamera
 {
     Q_OBJECT
@@ -94,13 +95,18 @@ private:
     int m_lastKeyPressNumber = 0;  //上一个按下的数字键(在按下shift键后保存，用于恢复)
     double MouseSphereRadius = 2.5;  //原始2.5
     std::vector<bool> m_visit;   // 标记已经被选择过的三角面
+    bool m_bFKeyIsPress = false;        //f键被按下 查看三角形ID功能
 
-    enum SelectMode
+    enum class SelectMode
     {
         MultipleSelect = 0,  //多重选择,选择一大片
-        SingleSelect = 1     //单个选择 选择一个三角面片
+        SingleSelect =1      //单个选择 选择一个三角面片
     };
-    SelectMode triangleSelectMode = MultipleSelect;
+    SelectMode triangleSelectMode = SelectMode::MultipleSelect;
+
+
+    //测绘程序
+    vtkNew<vtkActor> visCellactor;
 };
 
 #endif // DESIGNINTERACTORSTYLE_H

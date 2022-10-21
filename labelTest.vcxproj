@@ -16,7 +16,8 @@
     <Keyword>QtVS_v304</Keyword>
     <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformMinVersion>10.0.19041.0</WindowsTargetPlatformMinVersion>
-  <QtMsBuild Condition="'$(QtMsBuild)'=='' or !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild></PropertyGroup>
+    <QtMsBuild Condition="'$(QtMsBuild)'=='' or !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <PlatformToolset>v142</PlatformToolset>
@@ -36,7 +37,10 @@
     <IntermediateDirectory>debug\</IntermediateDirectory>
     <PrimaryOutput>labelTest</PrimaryOutput>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" /><Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')"><Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." /></Target>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
+    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
+  </Target>
   <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
@@ -44,12 +48,38 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
   </ImportGroup>
-  <PropertyGroup Label="UserMacros" /><ImportGroup Condition="Exists('$(QtMsBuild)\qt_defaults.props')"><Import Project="$(QtMsBuild)\qt_defaults.props" /></ImportGroup><PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"><OutDir>debug\</OutDir><IntDir>debug\</IntDir><TargetName>labelTest</TargetName><IgnoreImportLibrary>true</IgnoreImportLibrary></PropertyGroup><PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'"><OutDir>release\</OutDir><IntDir>release\</IntDir><TargetName>labelTest</TargetName><IgnoreImportLibrary>true</IgnoreImportLibrary><LinkIncremental>false</LinkIncremental></PropertyGroup><PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"><QtInstall>5.15.2_msvc2019_64</QtInstall><QtModules>core;gui;widgets</QtModules></PropertyGroup><PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|x64'"><QtInstall>5.15.2_msvc2019_64</QtInstall><QtModules>core;gui;widgets</QtModules></PropertyGroup><ImportGroup Condition="Exists('$(QtMsBuild)\qt.props')"><Import Project="$(QtMsBuild)\qt.props" /></ImportGroup>
-  
+  <PropertyGroup Label="UserMacros" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt_defaults.props')">
+    <Import Project="$(QtMsBuild)\qt_defaults.props" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>debug\</OutDir>
+    <IntDir>debug\</IntDir>
+    <TargetName>labelTest</TargetName>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>release\</OutDir>
+    <IntDir>release\</IntDir>
+    <TargetName>labelTest</TargetName>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <QtInstall>5.15.2_msvc2019_64</QtInstall>
+    <QtModules>core;gui;widgets</QtModules>
+  </PropertyGroup>
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <QtInstall>5.15.2_msvc2019_64</QtInstall>
+    <QtModules>core;gui;widgets</QtModules>
+  </PropertyGroup>
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.props')">
+    <Import Project="$(QtMsBuild)\qt.props" />
+  </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>.;C:\vtk-prefix\include\vtk-8.2;release;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus /utf-8 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>release\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -63,7 +93,8 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
       <WarningLevel>Level3</WarningLevel>
-    <MultiProcessorCompilation>true</MultiProcessorCompilation></ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
     <Link>
       <AdditionalDependencies>C:\vtk-prefix\lib\vtkChartsCore-8.2.lib;C:\vtk-prefix\lib\vtkCommonColor-8.2.lib;C:\vtk-prefix\lib\vtkCommonComputationalGeometry-8.2.lib;C:\vtk-prefix\lib\vtkCommonCore-8.2.lib;C:\vtk-prefix\lib\vtkCommonDataModel-8.2.lib;C:\vtk-prefix\lib\vtkCommonExecutionModel-8.2.lib;C:\vtk-prefix\lib\vtkCommonMath-8.2.lib;C:\vtk-prefix\lib\vtkCommonMisc-8.2.lib;C:\vtk-prefix\lib\vtkCommonSystem-8.2.lib;C:\vtk-prefix\lib\vtkCommonTransforms-8.2.lib;C:\vtk-prefix\lib\vtkDICOMParser-8.2.lib;C:\vtk-prefix\lib\vtkDomainsChemistry-8.2.lib;C:\vtk-prefix\lib\vtkDomainsChemistryOpenGL2-8.2.lib;C:\vtk-prefix\lib\vtkdoubleconversion-8.2.lib;C:\vtk-prefix\lib\vtkexodusII-8.2.lib;C:\vtk-prefix\lib\vtkexpat-8.2.lib;C:\vtk-prefix\lib\vtkFiltersAMR-8.2.lib;C:\vtk-prefix\lib\vtkFiltersCore-8.2.lib;C:\vtk-prefix\lib\vtkFiltersExtraction-8.2.lib;C:\vtk-prefix\lib\vtkFiltersFlowPaths-8.2.lib;C:\vtk-prefix\lib\vtkFiltersGeneral-8.2.lib;C:\vtk-prefix\lib\vtkFiltersGeneric-8.2.lib;C:\vtk-prefix\lib\vtkFiltersGeometry-8.2.lib;C:\vtk-prefix\lib\vtkFiltersHybrid-8.2.lib;C:\vtk-prefix\lib\vtkFiltersHyperTree-8.2.lib;C:\vtk-prefix\lib\vtkFiltersImaging-8.2.lib;C:\vtk-prefix\lib\vtkFiltersModeling-8.2.lib;C:\vtk-prefix\lib\vtkFiltersParallel-8.2.lib;C:\vtk-prefix\lib\vtkFiltersParallelImaging-8.2.lib;C:\vtk-prefix\lib\vtkFiltersPoints-8.2.lib;C:\vtk-prefix\lib\vtkFiltersProgrammable-8.2.lib;C:\vtk-prefix\lib\vtkFiltersSelection-8.2.lib;C:\vtk-prefix\lib\vtkFiltersSMP-8.2.lib;C:\vtk-prefix\lib\vtkFiltersSources-8.2.lib;C:\vtk-prefix\lib\vtkFiltersStatistics-8.2.lib;C:\vtk-prefix\lib\vtkFiltersTexture-8.2.lib;C:\vtk-prefix\lib\vtkFiltersTopology-8.2.lib;C:\vtk-prefix\lib\vtkFiltersVerdict-8.2.lib;C:\vtk-prefix\lib\vtkfreetype-8.2.lib;C:\vtk-prefix\lib\vtkGeovisCore-8.2.lib;C:\vtk-prefix\lib\vtkgl2ps-8.2.lib;C:\vtk-prefix\lib\vtkglew-8.2.lib;C:\vtk-prefix\lib\vtkGUISupportQt-8.2.lib;C:\vtk-prefix\lib\vtkGUISupportQtSQL-8.2.lib;C:\vtk-prefix\lib\vtkhdf5-8.2.lib;C:\vtk-prefix\lib\vtkhdf5_hl-8.2.lib;C:\vtk-prefix\lib\vtkImagingColor-8.2.lib;C:\vtk-prefix\lib\vtkImagingCore-8.2.lib;C:\vtk-prefix\lib\vtkImagingFourier-8.2.lib;C:\vtk-prefix\lib\vtkImagingGeneral-8.2.lib;C:\vtk-prefix\lib\vtkImagingHybrid-8.2.lib;C:\vtk-prefix\lib\vtkImagingMath-8.2.lib;C:\vtk-prefix\lib\vtkImagingMorphological-8.2.lib;C:\vtk-prefix\lib\vtkImagingSources-8.2.lib;C:\vtk-prefix\lib\vtkImagingStatistics-8.2.lib;C:\vtk-prefix\lib\vtkImagingStencil-8.2.lib;C:\vtk-prefix\lib\vtkInfovisCore-8.2.lib;C:\vtk-prefix\lib\vtkInfovisLayout-8.2.lib;C:\vtk-prefix\lib\vtkInteractionImage-8.2.lib;C:\vtk-prefix\lib\vtkInteractionStyle-8.2.lib;C:\vtk-prefix\lib\vtkInteractionWidgets-8.2.lib;C:\vtk-prefix\lib\vtkIOAMR-8.2.lib;C:\vtk-prefix\lib\vtkIOAsynchronous-8.2.lib;C:\vtk-prefix\lib\vtkIOCityGML-8.2.lib;C:\vtk-prefix\lib\vtkIOCore-8.2.lib;C:\vtk-prefix\lib\vtkIOEnSight-8.2.lib;C:\vtk-prefix\lib\vtkIOExodus-8.2.lib;C:\vtk-prefix\lib\vtkIOExport-8.2.lib;C:\vtk-prefix\lib\vtkIOExportOpenGL2-8.2.lib;C:\vtk-prefix\lib\vtkIOExportPDF-8.2.lib;C:\vtk-prefix\lib\vtkIOGeometry-8.2.lib;C:\vtk-prefix\lib\vtkIOImage-8.2.lib;C:\vtk-prefix\lib\vtkIOImport-8.2.lib;C:\vtk-prefix\lib\vtkIOInfovis-8.2.lib;C:\vtk-prefix\lib\vtkIOLegacy-8.2.lib;C:\vtk-prefix\lib\vtkIOLSDyna-8.2.lib;C:\vtk-prefix\lib\vtkIOMINC-8.2.lib;C:\vtk-prefix\lib\vtkIOMovie-8.2.lib;C:\vtk-prefix\lib\vtkIONetCDF-8.2.lib;C:\vtk-prefix\lib\vtkIOParallel-8.2.lib;C:\vtk-prefix\lib\vtkIOParallelXML-8.2.lib;C:\vtk-prefix\lib\vtkIOPLY-8.2.lib;C:\vtk-prefix\lib\vtkIOSegY-8.2.lib;C:\vtk-prefix\lib\vtkIOSQL-8.2.lib;C:\vtk-prefix\lib\vtkIOTecplotTable-8.2.lib;C:\vtk-prefix\lib\vtkIOVeraOut-8.2.lib;C:\vtk-prefix\lib\vtkIOVideo-8.2.lib;C:\vtk-prefix\lib\vtkIOXML-8.2.lib;C:\vtk-prefix\lib\vtkIOXMLParser-8.2.lib;C:\vtk-prefix\lib\vtkjpeg-8.2.lib;C:\vtk-prefix\lib\vtkjsoncpp-8.2.lib;C:\vtk-prefix\lib\vtklibharu-8.2.lib;C:\vtk-prefix\lib\vtklibxml2-8.2.lib;C:\vtk-prefix\lib\vtkLocalExample-8.2.lib;C:\vtk-prefix\lib\vtklz4-8.2.lib;C:\vtk-prefix\lib\vtklzma-8.2.lib;C:\vtk-prefix\lib\vtkmetaio-8.2.lib;C:\vtk-prefix\lib\vtkNetCDF-8.2.lib;C:\vtk-prefix\lib\vtkogg-8.2.lib;C:\vtk-prefix\lib\vtkParallelCore-8.2.lib;C:\vtk-prefix\lib\vtkpng-8.2.lib;C:\vtk-prefix\lib\vtkproj-8.2.lib;C:\vtk-prefix\lib\vtkpugixml-8.2.lib;C:\vtk-prefix\lib\vtkRenderingAnnotation-8.2.lib;C:\vtk-prefix\lib\vtkRenderingContext2D-8.2.lib;C:\vtk-prefix\lib\vtkRenderingContextOpenGL2-8.2.lib;C:\vtk-prefix\lib\vtkRenderingCore-8.2.lib;C:\vtk-prefix\lib\vtkRenderingFreeType-8.2.lib;C:\vtk-prefix\lib\vtkRenderingGL2PSOpenGL2-8.2.lib;C:\vtk-prefix\lib\vtkRenderingImage-8.2.lib;C:\vtk-prefix\lib\vtkRenderingLabel-8.2.lib;C:\vtk-prefix\lib\vtkRenderingLOD-8.2.lib;C:\vtk-prefix\lib\vtkRenderingOpenGL2-8.2.lib;C:\vtk-prefix\lib\vtkRenderingQt-8.2.lib;C:\vtk-prefix\lib\vtkRenderingVolume-8.2.lib;C:\vtk-prefix\lib\vtkRenderingVolumeOpenGL2-8.2.lib;C:\vtk-prefix\lib\vtksqlite-8.2.lib;C:\vtk-prefix\lib\vtksys-8.2.lib;C:\vtk-prefix\lib\vtkTestingGenericBridge-8.2.lib;C:\vtk-prefix\lib\vtkTestingIOSQL-8.2.lib;C:\vtk-prefix\lib\vtkTestingRendering-8.2.lib;C:\vtk-prefix\lib\vtktheora-8.2.lib;C:\vtk-prefix\lib\vtktiff-8.2.lib;C:\vtk-prefix\lib\vtkverdict-8.2.lib;C:\vtk-prefix\lib\vtkViewsContext2D-8.2.lib;C:\vtk-prefix\lib\vtkViewsCore-8.2.lib;C:\vtk-prefix\lib\vtkViewsInfovis-8.2.lib;C:\vtk-prefix\lib\vtkViewsQt-8.2.lib;C:\vtk-prefix\lib\vtkzlib-8.2.lib;shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\vtk-prefix\lib;C:\openssl\lib;C:\Utils\my_sql\mysql-5.7.25-winx64\lib;C:\Utils\postgresql\pgsql\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -86,11 +117,24 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;QT_DEPRECATED_WARNINGS;NDEBUG;QT_NO_DEBUG;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
-  <QtMoc><CompilerFlavor>msvc</CompilerFlavor><Include>./$(Configuration)/moc_predefs.h</Include><ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription><DynamicSource>output</DynamicSource><QtMocDir>$(Configuration)</QtMocDir><QtMocFileName>moc_%(Filename).cpp</QtMocFileName></QtMoc><QtUic><ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription><QtUicDir>.</QtUicDir><QtUicFileName>ui_%(Filename).h</QtUicFileName></QtUic></ItemDefinitionGroup>
+    <QtMoc>
+      <CompilerFlavor>msvc</CompilerFlavor>
+      <Include>./$(Configuration)/moc_predefs.h</Include>
+      <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
+      <DynamicSource>output</DynamicSource>
+      <QtMocDir>$(Configuration)</QtMocDir>
+      <QtMocFileName>moc_%(Filename).cpp</QtMocFileName>
+    </QtMoc>
+    <QtUic>
+      <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
+      <QtUicDir>.</QtUicDir>
+      <QtUicFileName>ui_%(Filename).h</QtUicFileName>
+    </QtUic>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>.;C:\vtk-prefix\include\vtk-8.2;debug;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus /utf-8 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>debug\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -104,7 +148,8 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
       <WarningLevel>Level3</WarningLevel>
-    <MultiProcessorCompilation>true</MultiProcessorCompilation></ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
     <Link>
       <AdditionalDependencies>vtkChartsCore-8.2_d.lib;vtkCommonColor-8.2_d.lib;vtkCommonComputationalGeometry-8.2_d.lib;vtkCommonCore-8.2_d.lib;vtkCommonDataModel-8.2_d.lib;vtkCommonExecutionModel-8.2_d.lib;vtkCommonMath-8.2_d.lib;vtkCommonMisc-8.2_d.lib;vtkCommonSystem-8.2_d.lib;vtkCommonTransforms-8.2_d.lib;vtkDICOMParser-8.2_d.lib;vtkDomainsChemistry-8.2_d.lib;vtkDomainsChemistryOpenGL2-8.2_d.lib;vtkdoubleconversion-8.2_d.lib;vtkexodusII-8.2_d.lib;vtkexpat-8.2_d.lib;vtkFiltersAMR-8.2_d.lib;vtkFiltersCore-8.2_d.lib;vtkFiltersExtraction-8.2_d.lib;vtkFiltersFlowPaths-8.2_d.lib;vtkFiltersGeneral-8.2_d.lib;vtkFiltersGeneric-8.2_d.lib;vtkFiltersGeometry-8.2_d.lib;vtkFiltersHybrid-8.2_d.lib;vtkFiltersHyperTree-8.2_d.lib;vtkFiltersImaging-8.2_d.lib;vtkFiltersModeling-8.2_d.lib;vtkFiltersParallel-8.2_d.lib;vtkFiltersParallelImaging-8.2_d.lib;vtkFiltersPoints-8.2_d.lib;vtkFiltersProgrammable-8.2_d.lib;vtkFiltersSelection-8.2_d.lib;vtkFiltersSMP-8.2_d.lib;vtkFiltersSources-8.2_d.lib;vtkFiltersStatistics-8.2_d.lib;vtkFiltersTexture-8.2_d.lib;vtkFiltersTopology-8.2_d.lib;vtkFiltersVerdict-8.2_d.lib;vtkfreetype-8.2_d.lib;vtkGeovisCore-8.2_d.lib;vtkgl2ps-8.2_d.lib;vtkglew-8.2_d.lib;vtkGUISupportQt-8.2_d.lib;vtkGUISupportQtSQL-8.2_d.lib;vtkhdf5-8.2_d.lib;vtkhdf5_hl-8.2_d.lib;vtkImagingColor-8.2_d.lib;vtkImagingCore-8.2_d.lib;vtkImagingFourier-8.2_d.lib;vtkImagingGeneral-8.2_d.lib;vtkImagingHybrid-8.2_d.lib;vtkImagingMath-8.2_d.lib;vtkImagingMorphological-8.2_d.lib;vtkImagingSources-8.2_d.lib;vtkImagingStatistics-8.2_d.lib;vtkImagingStencil-8.2_d.lib;vtkInfovisCore-8.2_d.lib;vtkInfovisLayout-8.2_d.lib;vtkInteractionImage-8.2_d.lib;vtkInteractionStyle-8.2_d.lib;vtkInteractionWidgets-8.2_d.lib;vtkIOAMR-8.2_d.lib;vtkIOAsynchronous-8.2_d.lib;vtkIOCityGML-8.2_d.lib;vtkIOCore-8.2_d.lib;vtkIOEnSight-8.2_d.lib;vtkIOExodus-8.2_d.lib;vtkIOExport-8.2_d.lib;vtkIOExportOpenGL2-8.2_d.lib;vtkIOExportPDF-8.2_d.lib;vtkIOGeometry-8.2_d.lib;vtkIOImage-8.2_d.lib;vtkIOImport-8.2_d.lib;vtkIOInfovis-8.2_d.lib;vtkIOLegacy-8.2_d.lib;vtkIOLSDyna-8.2_d.lib;vtkIOMINC-8.2_d.lib;vtkIOMovie-8.2_d.lib;vtkIONetCDF-8.2_d.lib;vtkIOParallel-8.2_d.lib;vtkIOParallelXML-8.2_d.lib;vtkIOPLY-8.2_d.lib;vtkIOSegY-8.2_d.lib;vtkIOSQL-8.2_d.lib;vtkIOTecplotTable-8.2_d.lib;vtkIOVeraOut-8.2_d.lib;vtkIOVideo-8.2_d.lib;vtkIOXML-8.2_d.lib;vtkIOXMLParser-8.2_d.lib;vtkjpeg-8.2_d.lib;vtkjsoncpp-8.2_d.lib;vtklibharu-8.2_d.lib;vtklibxml2-8.2_d.lib;vtkLocalExample-8.2_d.lib;vtklz4-8.2_d.lib;vtklzma-8.2_d.lib;vtkmetaio-8.2_d.lib;vtkNetCDF-8.2_d.lib;vtkogg-8.2_d.lib;vtkParallelCore-8.2_d.lib;vtkpng-8.2_d.lib;vtkproj-8.2_d.lib;vtkpugixml-8.2_d.lib;vtkRenderingAnnotation-8.2_d.lib;vtkRenderingContext2D-8.2_d.lib;vtkRenderingContextOpenGL2-8.2_d.lib;vtkRenderingCore-8.2_d.lib;vtkRenderingFreeType-8.2_d.lib;vtkRenderingGL2PSOpenGL2-8.2_d.lib;vtkRenderingImage-8.2_d.lib;vtkRenderingLabel-8.2_d.lib;vtkRenderingLOD-8.2_d.lib;vtkRenderingOpenGL2-8.2_d.lib;vtkRenderingQt-8.2_d.lib;vtkRenderingVolume-8.2_d.lib;vtkRenderingVolumeOpenGL2-8.2_d.lib;vtksqlite-8.2_d.lib;vtksys-8.2_d.lib;vtkTestingGenericBridge-8.2_d.lib;vtkTestingIOSQL-8.2_d.lib;vtkTestingRendering-8.2_d.lib;vtktheora-8.2_d.lib;vtktiff-8.2_d.lib;vtkverdict-8.2_d.lib;vtkViewsContext2D-8.2_d.lib;vtkViewsCore-8.2_d.lib;vtkViewsInfovis-8.2_d.lib;vtkViewsQt-8.2_d.lib;vtkzlib-8.2_d.lib;shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\vtk-prefix\lib;C:\openssl\lib;C:\Utils\my_sql\mysql-5.7.25-winx64\lib;C:\Utils\postgresql\pgsql\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -125,8 +170,22 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;QT_DEPRECATED_WARNINGS;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
-  <QtUic><ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription><QtUicDir>.</QtUicDir><QtUicFileName>ui_%(Filename).h</QtUicFileName></QtUic><QtMoc><CompilerFlavor>msvc</CompilerFlavor><Include>./$(Configuration)/moc_predefs.h</Include><ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription><DynamicSource>output</DynamicSource><QtMocDir>$(Configuration)</QtMocDir><QtMocFileName>moc_%(Filename).cpp</QtMocFileName></QtMoc></ItemDefinitionGroup>
+    <QtUic>
+      <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
+      <QtUicDir>.</QtUicDir>
+      <QtUicFileName>ui_%(Filename).h</QtUicFileName>
+    </QtUic>
+    <QtMoc>
+      <CompilerFlavor>msvc</CompilerFlavor>
+      <Include>./$(Configuration)/moc_predefs.h</Include>
+      <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
+      <DynamicSource>output</DynamicSource>
+      <QtMocDir>$(Configuration)</QtMocDir>
+      <QtMocFileName>moc_%(Filename).cpp</QtMocFileName>
+    </QtMoc>
+  </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="UI\colortablewidget.cpp" />
     <ClCompile Include="VTK\designinteractorstyle.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
@@ -134,87 +193,42 @@
     <ClCompile Include="VTK\vtkshow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="UI\colortablewidget.h">
+    </QtMoc>
     <QtMoc Include="VTK\designinteractorstyle.h">
-      
-      
-      
-      
-      
-      
-      
-      
     </QtMoc>
     <QtMoc Include="mainwindow.h">
-      
-      
-      
-      
-      
-      
-      
-      
     </QtMoc>
     <QtMoc Include="UI\mytablewidget.h">
-      
-      
-      
-      
-      
-      
-      
-      
     </QtMoc>
     <QtMoc Include="VTK\vtkshow.h">
-      
-      
-      
-      
-      
-      
-      
-      
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    
-    
-    
-    
-    
-    
     <CustomBuild Include="debug\moc_predefs.h.cbt">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\mkspecs\features\data\dummy.cpp;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cl -Bx"$(QTDIR)\bin\qmake.exe" -nologo -Zc:wchar_t -FS -Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -Zi -MDd -W3 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 -wd4577 -wd4467 -E $(QTDIR)\mkspecs\features\data\dummy.cpp 2&gt;NUL &gt;debug\moc_predefs.h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cl -Bx"$(QTDIR)\bin\qmake.exe" -nologo -Zc:wchar_t -FS -Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus /utf-8 -Zi -MDd -W3 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 -wd4577 -wd4467 -E $(QTDIR)\mkspecs\features\data\dummy.cpp 2&gt;NUL &gt;debug\moc_predefs.h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generate moc_predefs.h</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">debug\moc_predefs.h;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="release\moc_predefs.h.cbt">
       <FileType>Document</FileType>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\mkspecs\features\data\dummy.cpp;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cl -Bx"$(QTDIR)\bin\qmake.exe" -nologo -Zc:wchar_t -FS -Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -O2 -Zi -MD -W3 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 -wd4577 -wd4467 -E $(QTDIR)\mkspecs\features\data\dummy.cpp 2&gt;NUL &gt;release\moc_predefs.h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cl -Bx"$(QTDIR)\bin\qmake.exe" -nologo -Zc:wchar_t -FS -Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus /utf-8 -O2 -Zi -MD -W3 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 -wd4577 -wd4467 -E $(QTDIR)\mkspecs\features\data\dummy.cpp 2&gt;NUL &gt;release\moc_predefs.h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generate moc_predefs.h</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">release\moc_predefs.h;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </CustomBuild>
-    
-    
-    
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="mainwindow.ui">
-      
-      
-      
-      
-      
-      
-      
-      
-      
     </QtUic>
   </ItemGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" /><ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')"><Import Project="$(QtMsBuild)\qt.targets" /></ImportGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
+    <Import Project="$(QtMsBuild)\qt.targets" />
+  </ImportGroup>
   <ImportGroup Label="ExtensionTargets" />
 </Project>

@@ -26,6 +26,9 @@
 #include <vtkImageMapper3D.h>
 #include <array>
 #include <vtkSelectEnclosedPoints.h>
+#include <vtkDataArray.h>
+#include <vtkFloatArray.h>
+
 
 DesignInteractorStyle::DesignInteractorStyle(QObject *parent)
     : QObject{parent}
@@ -97,7 +100,7 @@ void DesignInteractorStyle::OnMiddleButtonUp()
 void DesignInteractorStyle::OnMouseMove()
 {
 //    cell2DShow();
-    //showCellID();
+    showCellID();
     //当右键点击时，采用鼠标左键默认的旋转方式。
     //当中键点击时，采用鼠标中键默认的移动方式
     if (m_rightButtonIsPress || m_midButtonIsPress)
@@ -185,7 +188,7 @@ inline void DesignInteractorStyle::OnChar()
 {
     vtkRenderWindowInteractor *rwi = this->Interactor;
     const std::string key = rwi->GetKeySym();
-    if ("s" == key || "w" == key || "3" == key)
+    if ("s" == key || "w" == key || "3" == key || "f" == key)
     {
         return;
     }
@@ -300,6 +303,10 @@ void DesignInteractorStyle::OnMouseWheelBackward()
 void DesignInteractorStyle::OnKeyPress()
 {
     char flag = this->Interactor->GetKeyCode();
+    if ('f' == flag)
+    {
+        m_bFKeyIsPress = true;
+    }
 
     if ('s' == flag)
     {
@@ -338,6 +345,12 @@ void DesignInteractorStyle::OnKeyPress()
 
 void DesignInteractorStyle::OnKeyRelease()
 {
+
+    if ('f' == this->Interactor->GetKeyCode())
+    {
+        m_bFKeyIsPress = false;
+        return;
+    }
     //shift 松开恢复原有数字
     if (m_bShiftKeyIsPress && !this->Interactor->GetShiftKey())
     {
@@ -388,8 +401,6 @@ bool DesignInteractorStyle::getOBBTreeIntersectWithLine(vtkPolyData *m_polyData,
     {
         endPos[i] = pViewDir[i] * 1000 + worldPos[i];
     }
-
-
 
     int iRet = obbTree->IntersectWithLine(worldPos,endPos,intersecPoints,intersecCells);
 
@@ -476,6 +487,17 @@ bool DesignInteractorStyle::CellInSphere(const double *Position, int TriID)
 
 void DesignInteractorStyle::showCellID()
 {
+    if (!m_bFKeyIsPress)
+    {
+        m_renderer->RemoveActor(rectActor);
+        m_renderer->RemoveActor(cellLabels);
+        m_renderer->RemoveActor(pointLabels);
+        m_polyDataActor->GetProperty()->EdgeVisibilityOff();
+        return;
+    }
+    
+    m_polyDataActor->GetProperty()->EdgeVisibilityOn();
+
     //设置显示的区域
     int* pEvtPos      = this->Interactor->GetEventPosition();
     vtkNew<vtkNamedColors> colors;
@@ -522,24 +544,35 @@ void DesignInteractorStyle::showCellID()
     ids->FieldDataOn();
     ids->Update();
 
-//    qDebug()<<"ids count: "<<ids->GetOutput()->GetNumberOfCells();
+ /*   auto id = ids->GetOutput()->GetCellData()->GetGlobalIds();
 
+    for (size_t i = 0; i < ids->GetOutput()->GetNumberOfCells(); i++)
+    {
+        ids->GetOutput()->GetCellData()->GetGlobalIds();
+    }*/
+    qDebug()<<"ids count: "<<ids->GetOutput()->GetNumberOfCells();
+    qDebug() << "123sss";
+   
     // cell ID显示
     vtkNew<vtkCellCenters> cellCenter;
     cellCenter->SetInputConnection(ids->GetOutputPort());
     cellCenter->VertexCellsOn();  //获取cell的顶点信息
     cellCenter->Update();
-//    qDebug()<<"cellCenter count: "<<cellCenter->GetOutput()->GetNumberOfCells();
+    qDebug()<<"cellCenter count: "<<cellCenter->GetOutput()->GetNumberOfCells();
 //    qDebug()<<"polydata count: "<<m_polyData->GetNumberOfCells();
 
-    //提取可见的点（基于 z-buffer 计算）
+    //提取可见的点（基于 z-buffer 计算） 
     vtkNew<vtkSelectVisiblePoints> visCells;
     visCells->SetInputConnection(cellCenter->GetOutputPort());
     visCells->SetRenderer(m_renderer);
     visCells->SelectionWindowOn();
+    visCells->SelectInvisibleOff();
     visCells->SetSelection(xmin, xmax, ymin, ymax);
+    visCells->Update();
 
-
+    //这里才是 数据个数
+    qDebug()<<"visCells GetNumberOfCells: "<<visCells->GetOutput()->GetNumberOfCells();
+    
     vtkNew<vtkLabeledDataMapper> cellMapper;
     cellMapper->SetInputConnection(visCells->GetOutputPort());
     cellMapper->SetLabelModeToLabelFieldData();
@@ -628,8 +661,23 @@ void DesignInteractorStyle::setPolyDataActor(vtkActor *newPolyDataActor)
     m_polyDataActor = newPolyDataActor;
     obbTree = vtkSmartPointer<vtkOBBTree>::New();
     obbTree->SetDataSet(m_polyData);
-//    obbTree->SetMaxLevel(50);
+    obbTree->SetMaxLevel(5);
     obbTree->BuildLocator();
+
+    //vtkNew<vtkPolyData> obbPolyData;
+    //obbTree->GenerateRepresentation(3, obbPolyData);
+
+    //vtkNew<vtkPolyDataMapper> obbMapper;
+    //obbMapper->SetInputData(obbPolyData);
+
+    //vtkNew<vtkActor> obbActor;
+    //obbActor->SetMapper(obbMapper);
+    //obbActor->GetProperty()->SetInterpolationToFlat();
+    //obbActor->GetProperty()->SetOpacity(.5);
+    //obbActor->GetProperty()->EdgeVisibilityOn();
+    ////obbActor->GetProperty()->SetColor(
+    ////    colors->GetColor4d("SpringGreen").GetData());
+    //this->m_renderer->AddActor(obbActor);
 }
 
 void DesignInteractorStyle::slot_changeKeyPressNumber(int number)

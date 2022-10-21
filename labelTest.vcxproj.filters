@@ -37,6 +37,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="UI\colortablewidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="VTK\designinteractorstyle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -54,6 +57,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="UI\colortablewidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
     <QtMoc Include="VTK\designinteractorstyle.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -68,21 +74,12 @@
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    
-    
-    
-    
-    
-    
     <CustomBuild Include="debug\moc_predefs.h.cbt">
       <Filter>Generated Files</Filter>
     </CustomBuild>
     <CustomBuild Include="release\moc_predefs.h.cbt">
       <Filter>Generated Files</Filter>
     </CustomBuild>
-    
-    
-    
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="mainwindow.ui">
