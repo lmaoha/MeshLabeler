@@ -71,8 +71,11 @@ private:
 
     //以下是测试程序还未用到
     void showCellID();
+    void SelectVisiblePointsStyle_SelectCell();
+
     void cell2DShow();
     void selectEnclosePoints();
+    void showCircle();
 
 private:
     vtkNew<vtkActor> m_sphereActor;   //球actor
@@ -96,7 +99,7 @@ private:
     double MouseSphereRadius = 2.5;  //原始2.5
     std::vector<bool> m_visit;   // 标记已经被选择过的三角面
     bool m_bFKeyIsPress = false;        //f键被按下 查看三角形ID功能
-
+    bool m_b_G_keyIsPress = false;      //g被按下 使用SelectVisiblePoints 方式选择三角面   选择可见三角形中心来选择三角形ID z-buff 
     enum class SelectMode
     {
         MultipleSelect = 0,  //多重选择,选择一大片

@@ -48,6 +48,7 @@ public:
     MyTableWidget *tableWidget;
     QVTKWidget *qvtkWidget;
     QLabel *label_3;
+    QLabel *label_4;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -191,6 +192,12 @@ public:
 
         verticalLayout_3->addWidget(label_3);
 
+        label_4 = new QLabel(centralwidget);
+        label_4->setObjectName(QString::fromUtf8("label_4"));
+        label_4->setFont(font1);
+
+        verticalLayout_3->addWidget(label_4);
+
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName(QString::fromUtf8("menubar"));
@@ -219,6 +226,7 @@ public:
         QTableWidgetItem *___qtablewidgetitem1 = tableWidget->horizontalHeaderItem(1);
         ___qtablewidgetitem1->setText(QCoreApplication::translate("MainWindow", "\344\277\235\345\255\230\347\212\266\346\200\201", nullptr));
         label_3->setText(QCoreApplication::translate("MainWindow", "\345\277\253\346\215\267\351\224\256\357\274\232 \345\215\225\347\213\254\351\200\211\346\213\251: \"S\"   \350\277\236\347\273\255\351\200\211\346\213\251\344\270\211\350\247\222\351\235\242\347\211\207: \"D\"   \345\244\215\344\275\215\350\247\206\350\247\222: \"R\"    \351\200\211\346\213\251\346\240\207\346\263\250\351\242\234\350\211\262: \"1-9\"   \346\270\205\351\231\244\351\200\211\346\213\251 \"\346\214\211\344\270\213shift\"    \350\256\276\347\275\256\351\200\211\346\213\251\347\220\203\345\244\247\345\260\217:\"\346\214\211\344\270\213Ctrl+\346\273\232\350\275\256\"     Ctrl + Shift + \346\273\232\350\275\256 :\342\200\234\345\210\207\346\215\242\346\240\207\347\255\276\351\242\234\350\211\262\"", nullptr));
+        label_4->setText(QCoreApplication::translate("MainWindow", "\345\277\253\346\215\267\351\224\256\357\274\232 \346\237\245\347\234\213\347\202\271ID \345\222\214\344\270\211\350\247\222\345\275\242ID : \"F\"\357\274\233   \344\275\277\347\224\250\345\217\257\350\247\201\347\202\271\346\235\245\351\200\211\346\213\251\344\270\211\350\247\222\351\235\242: \"G\"\357\274\233", nullptr));
     } // retranslateUi
 
 };

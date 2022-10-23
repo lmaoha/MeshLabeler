@@ -237,6 +237,18 @@
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QLabel" name="label_4">
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>快捷键： 查看点ID 和三角形ID : &quot;F&quot;；   使用可见点来选择三角面: &quot;G&quot;；</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">

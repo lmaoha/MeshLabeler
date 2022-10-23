@@ -28,7 +28,10 @@
 #include <vtkSelectEnclosedPoints.h>
 #include <vtkDataArray.h>
 #include <vtkFloatArray.h>
-
+#include <vtkLineSource.h>
+#include <vtkXMLPolyDataWriter.h>
+#include <vtkPointData.h>
+#include <iostream>
 
 DesignInteractorStyle::DesignInteractorStyle(QObject *parent)
     : QObject{parent}
@@ -100,7 +103,13 @@ void DesignInteractorStyle::OnMiddleButtonUp()
 void DesignInteractorStyle::OnMouseMove()
 {
 //    cell2DShow();
-    showCellID();
+    showCellID();   //使用
+    SelectVisiblePointsStyle_SelectCell();
+    
+    
+    //showCircle(); //显示圆
+
+
     //当右键点击时，采用鼠标左键默认的旋转方式。
     //当中键点击时，采用鼠标中键默认的移动方式
     if (m_rightButtonIsPress || m_midButtonIsPress)
@@ -303,10 +312,27 @@ void DesignInteractorStyle::OnMouseWheelBackward()
 void DesignInteractorStyle::OnKeyPress()
 {
     char flag = this->Interactor->GetKeyCode();
+
+    //shift 按下数字变为0 并保存原有数字
+    if (this->Interactor->GetShiftKey() && !this->Interactor->GetControlKey())
+    {
+        m_bShiftKeyIsPress = true;
+        m_lastKeyPressNumber = m_keyPressNumber;
+        m_keyPressNumber = 0;
+        emit sig_keyPressNumber(m_keyPressNumber);
+        return;
+    }
+
     if ('f' == flag)
     {
         m_bFKeyIsPress = true;
     }
+
+    if ('g' == flag)
+    {
+        m_b_G_keyIsPress = true;
+    }
+
 
     if ('s' == flag)
     {
@@ -323,16 +349,6 @@ void DesignInteractorStyle::OnKeyPress()
         return;
     }
 
-    //shift 按下数字变为0 并保存原有数字
-    if (this->Interactor->GetShiftKey() && !this->Interactor->GetControlKey())
-    {
-        m_bShiftKeyIsPress = true;
-        m_lastKeyPressNumber = m_keyPressNumber;
-        m_keyPressNumber = 0;
-        emit sig_keyPressNumber(m_keyPressNumber);
-        return;
-    }
-
     if (flag - '0' > 9 || flag - '0' < 0)
     {
         return;
@@ -345,20 +361,30 @@ void DesignInteractorStyle::OnKeyPress()
 
 void DesignInteractorStyle::OnKeyRelease()
 {
-
-    if ('f' == this->Interactor->GetKeyCode())
-    {
-        m_bFKeyIsPress = false;
-        return;
-    }
     //shift 松开恢复原有数字
     if (m_bShiftKeyIsPress && !this->Interactor->GetShiftKey())
     {
         m_bShiftKeyIsPress = false;
         m_keyPressNumber = m_lastKeyPressNumber;
         emit sig_keyPressNumber(m_keyPressNumber);
-        this->vtkInteractorStyleTrackballCamera::OnKeyRelease();
+        //this->vtkInteractorStyleTrackballCamera::OnKeyRelease();
+        return;
     }
+
+    if ('f' == this->Interactor->GetKeyCode())
+    {
+        m_bFKeyIsPress = false;
+        return;
+    }
+    if ('g' == this->Interactor->GetKeyCode())
+    {
+        m_b_G_keyIsPress = false;
+        return;
+    }
+
+
+
+
 }
 
 void DesignInteractorStyle::setPolyData(vtkPolyData *newPolyData)
@@ -485,6 +511,17 @@ bool DesignInteractorStyle::CellInSphere(const double *Position, int TriID)
     return false;
 }
 
+
+/**************************************************************************************************
+ *函数名： showCellID
+ *时间：   2022-10-01 18:15:42
+ *用户：   李旺
+ *参数：   无
+ *返回值： 在球内 true   在球外false
+ *描述：   将数据使用vtkIdFilter  变成全是点的数据  
+ *          分为 三角形中心点  和 顶点   
+ *          再使用vtkSelectVisiblePoints 提取可见点
+*************************************************************************************************/
 void DesignInteractorStyle::showCellID()
 {
     if (!m_bFKeyIsPress)
@@ -544,22 +581,11 @@ void DesignInteractorStyle::showCellID()
     ids->FieldDataOn();
     ids->Update();
 
- /*   auto id = ids->GetOutput()->GetCellData()->GetGlobalIds();
-
-    for (size_t i = 0; i < ids->GetOutput()->GetNumberOfCells(); i++)
-    {
-        ids->GetOutput()->GetCellData()->GetGlobalIds();
-    }*/
-    qDebug()<<"ids count: "<<ids->GetOutput()->GetNumberOfCells();
-    qDebug() << "123sss";
-   
     // cell ID显示
     vtkNew<vtkCellCenters> cellCenter;
     cellCenter->SetInputConnection(ids->GetOutputPort());
     cellCenter->VertexCellsOn();  //获取cell的顶点信息
     cellCenter->Update();
-    qDebug()<<"cellCenter count: "<<cellCenter->GetOutput()->GetNumberOfCells();
-//    qDebug()<<"polydata count: "<<m_polyData->GetNumberOfCells();
 
     //提取可见的点（基于 z-buffer 计算） 
     vtkNew<vtkSelectVisiblePoints> visCells;
@@ -570,9 +596,6 @@ void DesignInteractorStyle::showCellID()
     visCells->SetSelection(xmin, xmax, ymin, ymax);
     visCells->Update();
 
-    //这里才是 数据个数
-    qDebug()<<"visCells GetNumberOfCells: "<<visCells->GetOutput()->GetNumberOfCells();
-    
     vtkNew<vtkLabeledDataMapper> cellMapper;
     cellMapper->SetInputConnection(visCells->GetOutputPort());
     cellMapper->SetLabelModeToLabelFieldData();
@@ -600,6 +623,96 @@ void DesignInteractorStyle::showCellID()
     m_renderer->AddActor2D(rectActor);
     m_renderer->AddActor2D(cellLabels);
     m_renderer->AddActor2D(pointLabels);
+}
+
+
+//使用vtkSelectVisiblePoints 方式来选择三角面片
+void DesignInteractorStyle::SelectVisiblePointsStyle_SelectCell()
+{
+    if (!m_b_G_keyIsPress)
+    {
+        return;
+    }
+
+    //设置显示的区域
+    int* pEvtPos = this->Interactor->GetEventPosition();
+    vtkNew<vtkNamedColors> colors;
+
+    int centerX = pEvtPos[0];
+    int centerY = pEvtPos[1];
+
+    int xmin = centerX - 100;
+    int xmax = centerX + 100;
+    int ymin = centerY - 100;
+    int ymax = centerY + 100;
+
+    vtkNew<vtkPoints> pts;
+    pts->InsertPoint(0, xmin, ymin, 0);
+    pts->InsertPoint(1, xmax, ymin, 0);
+    pts->InsertPoint(2, xmax, ymax, 0);
+    pts->InsertPoint(3, xmin, ymax, 0);
+
+    vtkNew<vtkCellArray> rect;
+    rect->InsertNextCell(5);
+    rect->InsertCellPoint(0);
+    rect->InsertCellPoint(1);
+    rect->InsertCellPoint(2);
+    rect->InsertCellPoint(3);
+    rect->InsertCellPoint(0);
+
+    vtkNew<vtkPolyData> selectRect;
+    selectRect->SetPoints(pts);
+    selectRect->SetLines(rect);
+
+    vtkNew<vtkPolyDataMapper2D> rectMapper;
+    rectMapper->SetInputData(selectRect);
+    rectMapper->Update();
+
+    //显示要刷新显示的区域框
+    rectActor->SetMapper(rectMapper);
+    rectActor->GetProperty()->SetColor(colors->GetColor3d("black").GetData());
+
+    //将polydatad 数据提取出来
+    vtkNew<vtkIdFilter> ids;
+    ids->SetInputData(m_polyData);
+    ids->PointIdsOn();
+    ids->CellIdsOn();
+    ids->FieldDataOn();
+    ids->Update();
+
+    // cell ID显示
+    vtkNew<vtkCellCenters> cellCenter;
+    cellCenter->SetInputConnection(ids->GetOutputPort());
+    cellCenter->VertexCellsOn();  //获取cell的顶点信息
+    cellCenter->Update();
+
+    //提取可见的点（基于 z-buffer 计算） 
+    vtkNew<vtkSelectVisiblePoints> visCells;
+    visCells->SetInputConnection(cellCenter->GetOutputPort());
+    visCells->SetRenderer(m_renderer);
+    visCells->SelectionWindowOn();
+    visCells->SelectInvisibleOff();
+    visCells->SetSelection(xmin, xmax, ymin, ymax);
+    visCells->Update();
+
+    //当不知道polyData中有什么数据时，使用这个 
+    //保存成文本模式查看内部的数据
+    //vtkNew<vtkXMLPolyDataWriter> writer;
+    //writer->SetInputData(visCells->GetOutput());
+    //writer->SetFileName("C:/Users/Administrator/Desktop/VisCellsPolyData.vtp");
+    //writer->SetDataModeToAscii();
+    //writer->Write();
+
+    //vtkIdFilter_Ids  这个才是真正的 三角形中心ID号
+    vtkDataArray* dataArray = visCells->GetOutput()->GetPointData()->GetScalars("vtkIdFilter_Ids");
+    for (vtkIdType i = 0; i < dataArray->GetNumberOfValues(); i++)
+    {
+        auto value = dataArray->GetVariantValue(i);
+        m_polyData->GetCellData()->GetScalars()->SetTuple1(value.ToInt(), m_keyPressNumber);
+    }
+    m_polyData->Modified();
+    m_renderer->AddActor2D(rectActor);
+
 }
 
 
@@ -647,6 +760,95 @@ void DesignInteractorStyle::selectEnclosePoints()
     vtkNew<vtkSelectEnclosedPoints> select;
     select->SetInputData(m_polyData);
     select->SetSurfaceData(sphere->GetOutput());
+
+}
+
+
+//通过obbTree 显示圆圈
+void DesignInteractorStyle::showCircle()
+{
+    if (!m_bFKeyIsPress)
+    {
+        //m_polyDataActor->GetProperty()->EdgeVisibilityOff();
+        return;
+    }
+
+    vtkNew<vtkPoints> intersecPoints;  //交互点集合
+    vtkNew<vtkIdList> intersecCells;   //相交cell集合
+    bool bRet = getOBBTreeIntersectWithLine(m_polyData, intersecPoints, intersecCells);
+    double* pViewDir = m_renderer->GetActiveCamera()->GetDirectionOfProjection(); // 当前视角向量
+
+    if (!bRet )return;
+    double position[3];
+    intersecPoints->GetPoint(0, position);
+    //vtkIdType TriID = intersecCells->GetId(0);
+
+    const unsigned int numberofpoints = 21;
+
+    vtkNew<vtkPolyData> circle;
+    vtkNew<vtkPoints> points;
+    vtkNew<vtkCellArray> lines;
+    vtkIdType* lineIndices = new vtkIdType[numberofpoints + 1];
+
+    for (unsigned int i = 0; i < numberofpoints; i++)
+    {
+        const double angle = 2 * vtkMath::Pi() * static_cast<double>(i) / static_cast<double>(numberofpoints);
+
+        //通过OBBTree来做
+        double startPos[3];
+        double endPos[3];    //投影射线终点
+
+        startPos[0] = position[0] + MouseSphereRadius * cos(angle);
+        startPos[1] = position[1] + MouseSphereRadius * sin(angle);
+        startPos[2] = 0;
+
+
+        endPos[0] = pViewDir[0] * 1000 + startPos[0];
+        endPos[1] = pViewDir[1] * 1000 + startPos[1];
+        endPos[2] = pViewDir[2] * 1000 + startPos[2];
+
+        vtkNew<vtkLineSource> line;
+        line->SetPoint1(startPos);
+        line->SetPoint2(endPos);
+        line->Update();
+        vtkNew<vtkPolyDataMapper> mapper;
+        mapper->SetInputData(line->GetOutput());
+
+        vtkNew<vtkActor> actor;
+        actor->SetMapper(mapper);
+        m_renderer->AddActor(actor);
+
+        int iRet = obbTree->IntersectWithLine(startPos, endPos, intersecPoints, intersecCells);
+        if (intersecPoints->GetNumberOfPoints())
+        {
+            //continue;
+            intersecPoints->GetPoint(0, position);
+        }
+
+        points->InsertPoint(static_cast<vtkIdType>(i), position);
+        lineIndices[i] = static_cast<vtkIdType>(i);
+
+        //            qDebug()<<"  angle: "<<angle
+        //                   <<"  cos(angle): "<<holeRadius * cos(angle) + holeCenter.x()
+        //                  <<"  sin(angle): "<<holeRadius * sin(angle) + holeCenter.y();
+    }
+    lineIndices[numberofpoints] = 0;
+    lines->InsertNextCell(numberofpoints + 1, lineIndices);
+    delete[] lineIndices;
+
+    circle->SetPoints(points);
+    circle->SetLines(lines);
+
+    //vtkNew<vtkPolyDataMapper> mapper;
+    //mapper->SetInputData(circle);
+    //
+    //vtkNew<vtkActor> actor;
+    //actor->SetMapper(mapper);
+    //
+    //actor->GetProperty()->SetColor(255, 0, 0);
+
+    //m_renderer->AddActor(actor);
+    this->Interactor->GetRenderWindow()->Render();
 
 }
 
