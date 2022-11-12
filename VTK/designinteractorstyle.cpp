@@ -32,6 +32,9 @@
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkPointData.h>
 #include <iostream>
+#include <vtkMatrix4x4.h>
+#include <vtkTransform.h>
+
 
 DesignInteractorStyle::DesignInteractorStyle(QObject *parent)
     : QObject{parent}
@@ -203,6 +206,84 @@ inline void DesignInteractorStyle::OnChar()
     }
     vtkInteractorStyleTrackballCamera::OnChar();
 }
+
+
+/**************************************************************************************************
+ *函数名： Rotate
+ *时间：   2022年11月12日21:56:26
+ *用户：   李旺
+ *参数：   无
+ *返回值： 无
+ *描述：   重写相机的选转函数 （使相机 以零件的中心为旋转中心)
+**************************************************************************************************/
+void DesignInteractorStyle::Rotate()
+{
+    if (nullptr == this->CurrentRenderer)
+    {
+        return;
+    }
+    vtkRenderWindowInteractor* rwi = this->Interactor;
+
+    //先获取上次移动和这一次的距离差异
+    int dx = rwi->GetEventPosition()[0] - rwi->GetLastEventPosition()[0];
+    int dy = rwi->GetEventPosition()[1] - rwi->GetLastEventPosition()[1];
+
+    int* size = this->CurrentRenderer->GetRenderWindow()->GetSize();
+    
+    double delta_elevation = -20.0 / size[1];   
+    double delta_azimuth = -20.0 / size[0];     
+
+    double rxf = dx * delta_azimuth * this->MotionFactor;
+    double ryf = dy * delta_elevation * this->MotionFactor;
+
+    vtkCamera* camera = this->CurrentRenderer->GetActiveCamera();
+    
+    //这是原有的方法 
+    //camera->Azimuth(rxf);    //以焦点为中心水平旋转焦点
+    //camera->Elevation(ryf);  //以焦点为中心垂直旋转相机
+
+    double* focalPoint = camera->GetFocalPoint();
+    double* viewUp     = camera->GetViewUp();
+    double* position   = camera->GetPosition();
+    double axis[3];
+    axis[0] = -camera->GetViewTransformMatrix()->GetElement(0, 0);
+    axis[1] = -camera->GetViewTransformMatrix()->GetElement(0, 1);
+    axis[2] = -camera->GetViewTransformMatrix()->GetElement(0, 2);
+
+    //设置以actor中心为旋转中心
+    double* center = m_polyDataActor->GetCenter();
+
+    //创建  transform
+    vtkNew<vtkTransform> transform;
+    transform->Identity();  //将变换设置为恒定，若变换有输入，则变换被重置。
+    transform->Translate(center[0], center[1], center[2]);
+    transform->RotateWXYZ(rxf, viewUp); //对应是原始  Azimuth
+    transform->RotateWXYZ(ryf, axis);   //对应是原始  Elevation
+    transform->Translate(-center[0], -center[1], -center[2]);
+
+    double newPosition[3];
+    transform->TransformPoint(position, newPosition);
+
+    double newFocalPoint[3];
+    transform->TransformPoint(focalPoint, newFocalPoint);
+
+    camera->SetPosition(newPosition);
+    camera->SetFocalPoint(newFocalPoint);
+
+    //归一化 视角
+    camera->OrthogonalizeViewUp();
+    
+    if (this->AutoAdjustCameraClippingRange)
+    {
+        this->CurrentRenderer->ResetCameraClippingRange();
+    }
+
+    if (rwi->GetLightFollowCamera())
+    {
+        this->CurrentRenderer->UpdateLightsGeometryToFollowCamera();
+    }
+    rwi->Render();
+} 
 
 
 void DesignInteractorStyle::OnMouseWheelForward()

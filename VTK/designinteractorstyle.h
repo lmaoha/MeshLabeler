@@ -57,6 +57,8 @@ protected:
     virtual void OnKeyRelease() override;
     virtual void OnChar() override;
 
+    //重写Rotate 函数  将旋转中心放在actor的中心上
+    virtual void Rotate() override;     
 
 
 private:
