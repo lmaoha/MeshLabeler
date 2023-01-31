@@ -285,6 +285,10 @@ void VtkShow::decimatePro(const int &triangleCount)
     vtkNew<vtkDecimatePro> deci;
     deci->SetInputData(m_polyData);
     deci->SetTargetReduction(target);
+    deci->SetFeatureAngle(30);
+    deci->SetErrorIsAbsolute(1);
+    deci->SetAbsoluteError(0.0005);
+    deci->AccumulateErrorOn(); // 开启累积误差计算
     deci->Update();
     m_polyData = deci->GetOutput();
 

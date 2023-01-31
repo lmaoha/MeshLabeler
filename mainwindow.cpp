@@ -7,12 +7,14 @@
 
 #pragma execution_character_set("utf-8")
 
+const QString VER = "0.03";
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
+    setWindowTitle("标注软件 " + VER);
     m_appPath = QCoreApplication::applicationDirPath();
 
     m_config = new QSettings(m_appPath + "/config.ini",QSettings::IniFormat,this);
